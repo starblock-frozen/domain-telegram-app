@@ -1,0 +1,136 @@
+import React, { useState } from 'react';
+import { Modal, Typography, Button, Space, message, Divider } from 'antd';
+import { CopyOutlined, CheckOutlined } from '@ant-design/icons';
+
+const { Text, Paragraph } = Typography;
+
+const RequestModal = ({ visible, onCancel, onConfirm, selectedDomains, loading }) => {
+  const [copiedStates, setCopiedStates] = useState({});
+
+  const walletAddresses = {
+    BTC: 'bc1q53fnwtec9mmawqwg70hxaujfhycqhcgddykv0a',
+    'TRC20 USDT': 'TPVbi34oNsj2i3Gb9YSGYEKycu2QrnSHVr',
+    'ERC20 USDT': '0x94591187f253A688D2751af08998E2185A7f85f4',
+    'BEP20 USDT': '0x9E3183FF131D597dAC709D26B4c1F43b1271e3fA',
+    LTC: 'ltc1qw45xp50rh8efh38eu09dxvwgguwqgj6daf906v',
+    'SOL USDT(USDC)': 'GatJFDdyr43phMEB9V67iyVoH4K6717E1Shch3SLhpkf'
+  };
+
+  const copyToClipboard = async (text, key) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedStates(prev => ({ ...prev, [key]: true }));
+      message.success('Copied to clipboard!');
+      
+      setTimeout(() => {
+        setCopiedStates(prev => ({ ...prev, [key]: false }));
+      }, 2000);
+    } catch (err) {
+      message.error('Failed to copy to clipboard');
+    }
+  };
+
+  const totalPrice = selectedDomains.reduce((sum, domain) => sum + (domain.price || 0), 0);
+
+  return (
+    <Modal
+      title="Purchase Request"
+      open={visible}
+      onCancel={onCancel}
+      footer={[
+        <Button key="cancel" onClick={onCancel}>
+          Cancel
+        </Button>,
+        <Button 
+          key="request" 
+          type="primary" 
+          onClick={onConfirm}
+          loading={loading}
+        >
+          Send Request
+        </Button>
+      ]}
+      width="90%"
+      style={{ maxWidth: '400px' }}
+    >
+      <div style={{ marginBottom: 16 }}>
+        <Text strong>Selected Domains ({selectedDomains.length}):</Text>
+        <div style={{ marginTop: 8 }}>
+          {selectedDomains.map((domain, index) => (
+            <div key={index} style={{ 
+              padding: '4px 8px', 
+              backgroundColor: '#1f1f1f', 
+              borderRadius: '4px', 
+              marginBottom: 4 
+            }}>
+              <Text>{domain.domainName} - ${domain.price}</Text>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: 8, padding: '8px', backgroundColor: '#002140', borderRadius: '4px' }}>
+          <Text strong style={{ color: '#52c41a', fontSize: '16px' }}>
+            Total: ${totalPrice.toLocaleString()}
+          </Text>
+        </div>
+      </div>
+
+      <Divider />
+
+      <div>
+        <Text strong>Wallet Addresses:</Text>
+        <div style={{ marginTop: 12 }}>
+          {Object.entries(walletAddresses).map(([currency, address]) => {
+            const isCopied = copiedStates[currency];
+            return (
+              <div key={currency} style={{ marginBottom: 12 }}>
+                <Text strong style={{ display: 'block', marginBottom: 4 }}>
+                  {currency}:
+                </Text>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  backgroundColor: '#1f1f1f', 
+                  padding: '8px', 
+                  borderRadius: '4px' 
+                }}>
+                  <Text 
+                    style={{ 
+                      flex: 1, 
+                      fontSize: '12px', 
+                      wordBreak: 'break-all',
+                      marginRight: 8
+                    }}
+                  >
+                    {address}
+                  </Text>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={isCopied ? <CheckOutlined style={{ color: '#52c41a' }} /> : <CopyOutlined />}
+                    onClick={() => copyToClipboard(address, currency)}
+                    style={{ 
+                      color: isCopied ? '#52c41a' : undefined,
+                      flexShrink: 0
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <Divider />
+
+      <Paragraph style={{ fontSize: '14px', marginBottom: 0 }}>
+        Please send payment to the appropriate wallet address and then send the transaction screenshot 
+        or transaction link along with the domain names you want to purchase to{' '}
+        <Text strong style={{ color: '#1890ff' }}>@ph1l1pj0hn</Text>.
+        If you have any questions, feel free to contact{' '}
+        <Text strong style={{ color: '#1890ff' }}>@ph1l1pj0hn</Text>.
+      </Paragraph>
+    </Modal>
+  );
+};
+
+export default RequestModal;
