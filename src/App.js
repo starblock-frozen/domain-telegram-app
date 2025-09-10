@@ -6,15 +6,12 @@ import {
   Button,
   Typography,
   Space,
-  DatePicker,
   Radio,
-  Spin
+  Input
 } from 'antd';
 import { 
   ReloadOutlined, 
-  CalendarOutlined,
-  LeftOutlined,
-  RightOutlined
+  SearchOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -24,7 +21,7 @@ import RequestModal from './components/RequestModal';
 import LoadingSpinner from './components/LoadingSpinner';
 import useTelegram from './hooks/useTelegram';
 import { domainAPI, ticketAPI } from './services/api';
-import { filterByDate } from './utils/dateUtils';
+import { isToday } from './utils/dateUtils';
 
 import './App.css';
 
@@ -44,9 +41,8 @@ function App() {
 
   const [filters, setFilters] = useState({
     domainName: '',
-    countries: [], // Changed to array for multi-select
-    categories: [], // Changed to array for multi-select
-    selectedDate: dayjs(),
+    countries: [],
+    categories: [],
     statusFilter: 'all',
     daRange: [0, 100],
     paRange: [0, 100],
@@ -96,7 +92,6 @@ function App() {
       const statuses = {};
       response.data.data.forEach(ticket => {
         ticket.matchingDomains.forEach(domainName => {
-          // Use the latest ticket status for each domain
           if (!statuses[domainName] || 
               dayjs(ticket.request_time).isAfter(dayjs(statuses[domainName].request_time))) {
             statuses[domainName] = ticket.status;
@@ -120,12 +115,12 @@ function App() {
       );
     }
 
-    // Countries filter (multi-select)
+    // Countries filter
     if (filters.countries && filters.countries.length > 0) {
       filtered = filtered.filter(domain => filters.countries.includes(domain.country));
     }
 
-    // Categories filter (multi-select)
+    // Categories filter
     if (filters.categories && filters.categories.length > 0) {
       filtered = filtered.filter(domain => filters.categories.includes(domain.category));
     }
@@ -135,11 +130,6 @@ function App() {
       filtered = filtered.filter(domain => domain.status === true);
     } else if (filters.statusFilter === 'sold') {
       filtered = filtered.filter(domain => domain.status === false);
-    }
-
-    // Date filter
-    if (filters.selectedDate) {
-      filtered = filterByDate(filtered, filters.selectedDate);
     }
 
     // DA range filter
@@ -169,38 +159,11 @@ function App() {
       domainName: '',
       countries: [],
       categories: [],
-      selectedDate: dayjs(),
       statusFilter: 'all',
       daRange: [0, 100],
       paRange: [0, 100],
       ssRange: [0, 100],
     });
-  };
-
-  const showAllDomains = () => {
-    setFilters(prev => ({
-      ...prev,
-      selectedDate: null
-    }));
-  };
-
-  const handleDateChange = (date) => {
-    setFilters(prev => ({
-      ...prev,
-      selectedDate: date
-    }));
-  };
-
-  const handlePrevDate = () => {
-    const currentDate = filters.selectedDate || dayjs();
-    const prevDate = currentDate.subtract(1, 'day');
-    handleDateChange(prevDate);
-  };
-
-  const handleNextDate = () => {
-    const currentDate = filters.selectedDate || dayjs();
-    const nextDate = currentDate.add(1, 'day');
-    handleDateChange(nextDate);
   };
 
   const handleStatusFilterChange = (e) => {
@@ -210,9 +173,15 @@ function App() {
     }));
   };
 
+  const handleDomainNameChange = (e) => {
+    setFilters(prev => ({
+      ...prev,
+      domainName: e.target.value
+    }));
+  };
+
   const handleRequestBuy = (domainsToRequest) => {
     if (!userId) {
-      console.log(userId);
       message.error('Telegram user information not available');
       return;
     }
@@ -240,7 +209,6 @@ function App() {
       setDomainsToRequest([]);
       setSelectedDomains([]);
       
-      // Refresh ticket statuses
       fetchTicketStatuses();
       
     } catch (error) {
@@ -259,7 +227,6 @@ function App() {
   };
 
   const handleSelectionChange = (newSelectedDomains) => {
-    // Filter out sold domains from selection
     const availableSelections = newSelectedDomains.filter(domainId => {
       const domain = domains.find(d => d.id === domainId);
       return domain && domain.status;
@@ -335,55 +302,26 @@ function App() {
             />
           </div>
           
-          {/* Date Navigation */}
+          {/* Domain Search */}
           <div style={{ marginTop: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <Button
-                type="text"
-                icon={<LeftOutlined />}
-                onClick={handlePrevDate}
-                size="small"
-                style={{ color: 'rgba(255, 255, 255, 0.65)' }}
-              />
-              <DatePicker
-                value={filters.selectedDate}
-                onChange={handleDateChange}
-                style={{ flex: 1 }}
-                size="small"
-                allowClear={false}
-              />
-              <Button
-                type="text"
-                icon={<RightOutlined />}
-                onClick={handleNextDate}
-                size="small"
-                style={{ color: 'rgba(255, 255, 255, 0.65)' }}
-              />
-              <Button
-                type="text"
-                icon={<CalendarOutlined />}
-                onClick={showAllDomains}
-                size="small"
-                style={{ color: 'rgba(255, 255, 255, 0.65)' }}
-              >
-                All
-              </Button>
-            </div>
+            <Input
+              placeholder="Search domain name..."
+              value={filters.domainName}
+              onChange={handleDomainNameChange}
+              prefix={<SearchOutlined style={{ color: 'rgba(255, 255, 255, 0.45)' }} />}
+              allowClear
+              style={{ marginBottom: 8 }}
+            />
           </div>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.45)' }}>
               {filteredDomains.length} domains found
             </Text>
-            {filters.selectedDate && (
-              <Text style={{ fontSize: '12px', color: '#1890ff' }}>
-                {filters.selectedDate.format('MMM DD, YYYY')}
-              </Text>
-            )}
           </div>
         </div>
 
-        {/* Status Filter - Outside of FilterPanel */}
+        {/* Status Filter */}
         <div style={{ 
           padding: '8px 16px', 
           backgroundColor: '#141414', 

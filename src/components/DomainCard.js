@@ -7,7 +7,8 @@ import {
   Space, 
   Checkbox, 
   message,
-  Tooltip
+  Tooltip,
+  Badge
 } from 'antd';
 import { 
   CopyOutlined, 
@@ -15,9 +16,11 @@ import {
   CheckOutlined,
   ShoppingCartOutlined,
   ClockCircleOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
+  DownOutlined,
+  UpOutlined
 } from '@ant-design/icons';
-import { formatDate } from '../utils/dateUtils';
+import { formatDate, isToday, isYesterday } from '../utils/dateUtils';
 
 const { Text } = Typography;
 
@@ -29,6 +32,7 @@ const DomainCard = ({
   onRequestBuy 
 }) => {
   const [copied, setCopied] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const copyToClipboard = async (text) => {
     try {
@@ -78,128 +82,187 @@ const DomainCard = ({
     }
   };
 
+  const getPostedText = () => {
+    if (!domain.postDateTime) return '';
+    
+    if (isToday(domain.postDateTime)) {
+      return 'Posted: Today';
+    } else if (isYesterday(domain.postDateTime)) {
+      return 'Posted: Yesterday';
+    } else {
+      return `Posted: ${formatDate(domain.postDateTime)}`;
+    }
+  };
+
   const buttonConfig = getButtonConfig();
+  const isNewDomain = domain.postDateTime && isToday(domain.postDateTime);
+
+  const renderFirstLine = () => (
+    <div style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: 8,
+      marginBottom: 4
+    }}>
+      <Checkbox 
+        checked={selected} 
+        onChange={(e) => onSelect(domain.id, e.target.checked)}
+        disabled={!domain.status}
+      />
+      
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
+        {isNewDomain && (
+          <Badge 
+            count="NEW" 
+            style={{ 
+              backgroundColor: '#ff4d4f',
+              color: '#fff',
+              fontSize: '9px',
+              padding: '0 4px',
+              borderRadius: '8px',
+              height: '16px',
+              lineHeight: '16px',
+              fontWeight: 'bold'
+            }}
+          />
+        )}
+        <Text 
+          strong 
+          style={{ 
+            color: '#1890ff', 
+            fontSize: '16px',
+            textDecoration: domain.status ? 'none' : 'line-through',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            flex: 1
+          }}
+        >
+          {domain.domainName}
+        </Text>
+      </div>
+
+      <Space size="small">
+        <Tooltip title={copied ? 'Copied!' : 'Copy domain'}>
+          <Button
+            type="text"
+            size="small"
+            icon={copied ? <CheckOutlined style={{ color: '#52c41a' }} /> : <CopyOutlined />}
+            onClick={() => copyToClipboard(domain.domainName)}
+          />
+        </Tooltip>
+        <Tooltip title="Visit domain">
+          <Button
+            type="text"
+            size="small"
+            icon={<LinkOutlined />}
+            onClick={openDomain}
+          />
+        </Tooltip>
+        <Button
+          type="text"
+          size="small"
+          icon={expanded ? <UpOutlined /> : <DownOutlined />}
+          onClick={() => setExpanded(!expanded)}
+        />
+      </Space>
+    </div>
+  );
+
+  const renderExpandedContent = () => (
+    <div style={{ 
+      padding: '8px 0',
+      borderTop: '1px solid #303030',
+      borderBottom: '1px solid #303030',
+      backgroundColor: '#0f0f0f',
+      margin: '4px -12px'
+    }}>
+      <div style={{ padding: '0 12px' }}>
+        <Space wrap style={{ marginBottom: 8 }}>
+          <Tag color="blue">{domain.country}</Tag>
+          <Tag color={
+            domain.category === 'GOV' ? 'blue' :
+            domain.category === 'EDU' ? 'green' :
+            domain.category === 'eCommerce' ? 'orange' : 'purple'
+          }>
+            {domain.category}
+          </Tag>
+          <Tag color={domain.status ? 'success' : 'error'}>
+            {domain.status ? 'Available' : 'Sold'}
+          </Tag>
+        </Space>
+
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: '1fr 1fr 1fr 1fr', 
+          gap: '8px'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>DA</Text>
+            <Text strong style={{ color: domain.da >= 30 ? '#52c41a' : domain.da >= 10 ? '#faad14' : '#ff4d4f' }}>
+              {domain.da || 0}
+            </Text>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>PA</Text>
+            <Text strong style={{ color: domain.pa >= 30 ? '#52c41a' : domain.pa >= 10 ? '#faad14' : '#ff4d4f' }}>
+              {domain.pa || 0}
+            </Text>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>SS</Text>
+            <Text strong style={{ color: domain.ss <= 10 ? '#52c41a' : domain.ss <= 30 ? '#faad14' : '#ff4d4f' }}>
+              {domain.ss || 0}
+            </Text>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Backlinks</Text>
+            <Text strong>{(domain.backlink || 0).toLocaleString()}</Text>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSecondLine = () => (
+    <div style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'space-between',
+      gap: 8
+    }}>
+      <Text strong style={{ color: '#52c41a', fontSize: '16px' }}>
+        ${(domain.price || 0).toLocaleString()}
+      </Text>
+      
+      <Text type="secondary" style={{ fontSize: '12px', flex: 1, textAlign: 'center' }}>
+        {getPostedText()}
+      </Text>
+      
+      <Button
+        {...buttonConfig}
+        size="small"
+        onClick={() => onRequestBuy([domain])}
+        disabled={buttonConfig.disabled || !domain.status}
+      >
+        {buttonConfig.text}
+      </Button>
+    </div>
+  );
 
   return (
     <Card
       size="small"
       style={{ 
-        margin: '8px 16px', 
+        margin: '4px 16px', 
         borderRadius: '8px',
         opacity: domain.status ? 1 : 0.7
       }}
       bodyStyle={{ padding: '12px' }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 8 }}>
-        <Checkbox 
-          checked={selected} 
-          onChange={(e) => onSelect(domain.id, e.target.checked)}
-          style={{ marginRight: 8, marginTop: 2 }}
-          disabled={!domain.status} // Disable checkbox for sold domains
-        />
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-            <Text 
-              strong 
-              style={{ 
-                color: '#1890ff', 
-                fontSize: '16px',
-                textDecoration: domain.status ? 'none' : 'line-through'
-              }}
-            >
-              {domain.domainName}
-            </Text>
-            <Space style={{ marginLeft: 8 }}>
-              <Tooltip title={copied ? 'Copied!' : 'Copy domain'}>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={copied ? <CheckOutlined style={{ color: '#52c41a' }} /> : <CopyOutlined />}
-                  onClick={() => copyToClipboard(domain.domainName)}
-                />
-              </Tooltip>
-              <Tooltip title="Visit domain">
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<LinkOutlined />}
-                  onClick={openDomain}
-                />
-              </Tooltip>
-            </Space>
-          </div>
-          
-          <Space wrap style={{ marginBottom: 8 }}>
-            <Tag color="blue">{domain.country}</Tag>
-            <Tag color={
-              domain.category === 'GOV' ? 'blue' :
-              domain.category === 'EDU' ? 'green' :
-              domain.category === 'eCommerce' ? 'orange' : 'purple'
-            }>
-              {domain.category}
-            </Tag>
-            <Tag color={domain.status ? 'success' : 'error'}>
-              {domain.status ? 'Available' : 'Sold'}
-            </Tag>
-          </Space>
-
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr 1fr 1fr', 
-            gap: '8px',
-            marginBottom: 8
-          }}>
-            <div style={{ textAlign: 'center' }}>
-              <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>DA</Text>
-              <Text strong style={{ color: domain.da >= 30 ? '#52c41a' : domain.da >= 10 ? '#faad14' : '#ff4d4f' }}>
-                {domain.da || 0}
-              </Text>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>PA</Text>
-              <Text strong style={{ color: domain.pa >= 30 ? '#52c41a' : domain.pa >= 10 ? '#faad14' : '#ff4d4f' }}>
-                {domain.pa || 0}
-              </Text>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>SS</Text>
-              <Text strong style={{ color: domain.ss <= 10 ? '#52c41a' : domain.ss <= 30 ? '#faad14' : '#ff4d4f' }}>
-                {domain.ss || 0}
-              </Text>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <Text type="secondary" style={{ fontSize: '12px', display: 'block' }}>Backlinks</Text>
-              <Text strong>{(domain.backlink || 0).toLocaleString()}</Text>
-            </div>
-          </div>
-
-          {domain.postDateTime && (
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              Posted: {formatDate(domain.postDateTime)}
-            </Text>
-          )}
-        </div>
-      </div>
-
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        paddingTop: 8,
-        borderTop: '1px solid #303030'
-      }}>
-        <Text strong style={{ color: '#52c41a', fontSize: '18px' }}>
-          ${(domain.price || 0).toLocaleString()}
-        </Text>
-        <Button
-          {...buttonConfig}
-          size="small"
-          onClick={() => onRequestBuy([domain])}
-          disabled={buttonConfig.disabled || !domain.status}
-        >
-          {buttonConfig.text}
-        </Button>
-      </div>
+      {renderFirstLine()}
+      {expanded && renderExpandedContent()}
+      {renderSecondLine()}
     </Card>
   );
 };

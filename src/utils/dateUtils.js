@@ -8,6 +8,10 @@ export const isToday = (date) => {
   return dayjs(date).isSame(dayjs(), 'day');
 };
 
+export const isYesterday = (date) => {
+  return dayjs(date).isSame(dayjs().subtract(1, 'day'), 'day');
+};
+
 export const filterByDate = (domains, selectedDate) => {
   if (!selectedDate) return domains;
   

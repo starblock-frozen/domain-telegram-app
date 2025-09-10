@@ -1297,3 +1297,361 @@ html, body, #root {
   }
 }
 
+/* Compact domain card styles */
+.compact-domain-card {
+  transition: all 0.2s ease !important;
+}
+
+.compact-domain-card:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* New badge styles */
+.new-domain-badge {
+  background: linear-gradient(45deg, #ff4d4f, #ff7875) !important;
+  color: #fff !important;
+  font-weight: bold !important;
+  font-size: 9px !important;
+  padding: 0 4px !important;
+  border-radius: 8px !important;
+  height: 16px !important;
+  line-height: 16px !important;
+  box-shadow: 0 1px 3px rgba(255, 77, 79, 0.3) !important;
+  animation: pulse 2s infinite !important;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 1px 3px rgba(255, 77, 79, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 6px rgba(255, 77, 79, 0.5);
+  }
+  100% {
+    box-shadow: 0 1px 3px rgba(255, 77, 79, 0.3);
+  }
+}
+
+/* Collapsed domain card layout */
+.domain-card-collapsed {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 12px !important;
+  min-height: 48px !important;
+}
+
+.domain-card-collapsed .domain-name {
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.domain-card-collapsed .domain-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Expanded domain card */
+.domain-card-expanded {
+  border-top: 1px solid #303030 !important;
+  background-color: #0f0f0f !important;
+}
+
+/* Enhanced request modal */
+.request-modal-instructions {
+  background-color: #1f1f1f !important;
+  padding: 16px !important;
+  border-radius: 8px !important;
+  border: 1px solid #434343 !important;
+}
+
+.request-modal-telegram-link {
+  text-align: center !important;
+  padding: 12px !important;
+  background-color: #002140 !important;
+  border-radius: 6px !important;
+  border: 2px solid #1890ff !important;
+  transition: all 0.3s ease !important;
+}
+
+.request-modal-telegram-link:hover {
+  background-color: #003a8c !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3) !important;
+}
+
+.request-modal-telegram-link a {
+  color: #1890ff !important;
+  fontSize: 18px !important;
+  font-weight: bold !important;
+  text-decoration: none !important;
+  display: block !important;
+}
+
+.request-modal-telegram-link a:hover {
+  color: #40a9ff !important;
+}
+
+/* Search input in header */
+.header-search-input {
+  background-color: rgba(20, 20, 20, 0.8) !important;
+  border-color: #434343 !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+.header-search-input:focus,
+.header-search-input:hover {
+  border-color: #1890ff !important;
+  background-color: rgba(20, 20, 20, 0.95) !important;
+}
+
+/* Responsive adjustments for compact cards */
+@media (max-width: 480px) {
+  .domain-card-collapsed {
+    padding: 6px 8px !important;
+    gap: 4px !important;
+    min-height: 44px !important;
+  }
+  
+  .domain-card-collapsed .domain-actions {
+    gap: 2px !important;
+  }
+  
+  .domain-card-collapsed .domain-actions .ant-btn {
+    padding: 0 4px !important;
+    min-width: 24px !important;
+    height: 24px !important;
+  }
+  
+  .domain-card-collapsed .domain-name {
+    font-size: 13px !important;
+  }
+  
+  .new-domain-badge {
+    font-size: 8px !important;
+    height: 14px !important;
+    line-height: 14px !important;
+    padding: 0 3px !important;
+  }
+  
+  .request-modal-telegram-link a {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .domain-card-collapsed {
+    padding: 4px 6px !important;
+    min-height: 40px !important;
+  }
+  
+  .domain-card-collapsed .domain-actions .ant-btn {
+    padding: 0 2px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    font-size: 10px !important;
+  }
+  
+  .domain-card-collapsed .domain-name {
+    font-size: 12px !important;
+  }
+}
+
+/* Expand/collapse button */
+.expand-collapse-btn {
+  transition: transform 0.2s ease !important;
+}
+
+.expand-collapse-btn:hover {
+  transform: scale(1.1) !important;
+}
+
+/* Enhanced checkbox in collapsed view */
+.domain-card-collapsed .ant-checkbox {
+  transform: scale(1.1) !important;
+}
+
+/* Price display in collapsed view */
+.domain-price-collapsed {
+  font-weight: bold !important;
+  color: #52c41a !important;
+  font-size: 14px !important;
+  min-width: fit-content !important;
+  white-space: nowrap !important;
+}
+
+/* Button improvements in collapsed view */
+.domain-card-collapsed .ant-btn-primary {
+  font-size: 11px !important;
+  height: 28px !important;
+  padding: 0 8px !important;
+  border-radius: 4px !important;
+}
+
+.domain-card-collapsed .ant-btn-text {
+  padding: 0 4px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+}
+
+/* Enhanced grid layout for expanded metrics */
+.domain-metrics-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1fr 1fr !important;
+  gap: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+.domain-metric-item {
+  text-align: center !important;
+  padding: 4px !important;
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  border-radius: 4px !important;
+}
+
+/* Smooth transitions for expand/collapse */
+.domain-card-content {
+  transition: all 0.3s ease !important;
+  overflow: hidden !important;
+}
+
+/* Enhanced focus states for compact cards */
+.domain-card-collapsed:focus-within {
+  outline: 2px solid #1890ff !important;
+  outline-offset: 2px !important;
+}
+
+/* Loading state for domain cards */
+.domain-card-loading {
+  opacity: 0.6 !important;
+  pointer-events: none !important;
+}
+
+.domain-card-loading::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent) !important;
+  animation: shimmer 1.5s infinite !important;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Enhanced tag styles in expanded view */
+.domain-card-expanded .ant-tag {
+  margin: 2px !important;
+  font-size: 10px !important;
+  padding: 1px 4px !important;
+  border-radius: 3px !important;
+}
+
+/* Better visual separation */
+.domain-card-expanded {
+  border-top: 1px solid #303030 !important;
+  background: linear-gradient(to bottom, #0f0f0f, #141414) !important;
+}
+
+/* Improved accessibility */
+.domain-card-collapsed [role="button"]:focus-visible {
+  outline: 2px solid #1890ff !important;
+  outline-offset: 2px !important;
+  border-radius: 4px !important;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .new-domain-badge {
+    border: 2px solid #fff !important;
+    font-weight: 900 !important;
+  }
+  
+  .domain-card-collapsed {
+    border: 2px solid #fff !important;
+  }
+  
+  .request-modal-telegram-link {
+    border-width: 3px !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .new-domain-badge,
+  .compact-domain-card,
+  .expand-collapse-btn,
+  .request-modal-telegram-link {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .compact-domain-card:hover,
+  .expand-collapse-btn:hover,
+  .request-modal-telegram-link:hover {
+    transform: none !important;
+  }
+}
+
+/* Print styles for domain cards */
+@media print {
+  .domain-card-collapsed .domain-actions,
+  .new-domain-badge {
+    display: none !important;
+  }
+  
+  .domain-card-collapsed {
+    border: 1px solid #000 !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+}
+
+/* Dark theme enhancements */
+@media (prefers-color-scheme: dark) {
+  .domain-card-expanded {
+    background: linear-gradient(to bottom, #0a0a0a, #111111) !important;
+  }
+  
+  .domain-metric-item {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+  }
+}
+
+/* Custom scrollbar for expanded content */
+.domain-card-expanded::-webkit-scrollbar {
+  width: 2px !important;
+}
+
+.domain-card-expanded::-webkit-scrollbar-thumb {
+  background-color: #434343 !important;
+  border-radius: 1px !important;
+}
+
+/* Enhanced mobile touch targets */
+@media (hover: none) and (pointer: coarse) {
+  .domain-card-collapsed .ant-btn,
+  .domain-card-collapsed .ant-checkbox,
+  .expand-collapse-btn {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+  
+  .domain-card-collapsed {
+    min-height: 52px !important;
+  }
+}

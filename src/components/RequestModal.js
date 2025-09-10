@@ -122,13 +122,74 @@ const RequestModal = ({ visible, onCancel, onConfirm, selectedDomains, loading }
 
       <Divider />
 
-      <Paragraph style={{ fontSize: '14px', marginBottom: 0 }}>
-        Please send payment to the appropriate wallet address and then send the transaction screenshot 
-        or transaction link along with the domain names you want to purchase to{' '}
-        <Text strong style={{ color: '#1890ff' }}>@ph1l1pj0hn</Text>.
-        If you have any questions, feel free to contact{' '}
-        <Text strong style={{ color: '#1890ff' }}>@ph1l1pj0hn</Text>.
-      </Paragraph>
+      <div style={{ 
+        backgroundColor: '#1f1f1f', 
+        padding: '16px', 
+        borderRadius: '8px',
+        border: '1px solid #434343'
+      }}>
+        <Text strong style={{ 
+          color: '#1890ff', 
+          fontSize: '16px',
+          display: 'block',
+          marginBottom: '12px'
+        }}>
+          Payment Instructions:
+        </Text>
+        
+        <div style={{ lineHeight: '1.6', fontSize: '14px' }}>
+          <Text style={{ display: 'block', marginBottom: '8px' }}>
+            1. Send payment to the appropriate wallet address above
+          </Text>
+          <Text style={{ display: 'block', marginBottom: '8px' }}>
+            2. Take a screenshot of the transaction or copy the transaction link
+          </Text>
+          <Text style={{ display: 'block', marginBottom: '12px' }}>
+            3. Send the proof along with your domain list to our Telegram:
+          </Text>
+          
+          <div style={{ 
+            textAlign: 'center',
+            padding: '12px',
+            backgroundColor: '#002140',
+            borderRadius: '6px',
+            border: '2px solid #1890ff'
+          }}>
+            <a 
+              href="https://t.me/ph1l1pj0hn" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ 
+                color: '#1890ff',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                textDecoration: 'none',
+                display: 'block'
+              }}
+            >
+              @ph1l1pj0hn
+            </a>
+            <Text style={{ 
+              fontSize: '12px', 
+              color: 'rgba(255, 255, 255, 0.65)',
+              marginTop: '4px',
+              display: 'block'
+            }}>
+              Click to open Telegram
+            </Text>
+          </div>
+          
+          <Text style={{ 
+            display: 'block', 
+            marginTop: '12px',
+            fontSize: '12px',
+            color: 'rgba(255, 255, 255, 0.65)',
+            textAlign: 'center'
+          }}>
+            For any questions or support, contact our Telegram above
+          </Text>
+        </div>
+      </div>
     </Modal>
   );
 };

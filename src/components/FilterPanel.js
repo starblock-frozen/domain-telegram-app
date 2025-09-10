@@ -3,7 +3,6 @@ import {
   Card,
   Row,
   Col,
-  Input,
   Select,
   Slider,
   Button,
@@ -39,7 +38,6 @@ const FilterPanel = ({
     const newRange = [...currentRange];
     newRange[index] = value || 0;
     
-    // Ensure min <= max
     if (index === 0 && newRange[0] > newRange[1]) {
       newRange[1] = newRange[0];
     } else if (index === 1 && newRange[1] < newRange[0]) {
@@ -91,17 +89,6 @@ const FilterPanel = ({
       }
     >
       <Row gutter={[8, 8]}>
-        <Col span={24}>
-          <Text strong>Domain Name</Text>
-          <Input
-            placeholder="Search domain name"
-            value={filters.domainName}
-            onChange={(e) => handleFilterChange('domainName', e.target.value)}
-            allowClear
-            style={{ marginTop: 4 }}
-          />
-        </Col>
-
         <Col span={12}>
           <Text strong>Countries</Text>
           <Select
