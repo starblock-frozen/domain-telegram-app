@@ -29,12 +29,14 @@ const DomainCard = ({
   selected, 
   onSelect, 
   ticketStatus,
-  onRequestBuy 
+  onRequestBuy,
+  onCardClick 
 }) => {
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  const copyToClipboard = async (text) => {
+  const copyToClipboard = async (text, e) => {
+    e.stopPropagation();
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
@@ -48,8 +50,30 @@ const DomainCard = ({
     }
   };
 
-  const openDomain = () => {
+  const openDomain = (e) => {
+    e.stopPropagation();
     window.open(`https://${domain.domainName}`, '_blank');
+  };
+
+  const handleExpandClick = (e) => {
+    e.stopPropagation();
+    setExpanded(!expanded);
+  };
+
+  const handleCheckboxClick = (e) => {
+    e.stopPropagation();
+    onSelect(domain.id, e.target.checked);
+  };
+
+  const handleRequestClick = (e) => {
+    e.stopPropagation();
+    onRequestBuy([domain]);
+  };
+
+  const handleCardClick = () => {
+    if (onCardClick) {
+      onCardClick(domain.id);
+    }
   };
 
   const getButtonConfig = () => {
@@ -106,8 +130,9 @@ const DomainCard = ({
     }}>
       <Checkbox 
         checked={selected} 
-        onChange={(e) => onSelect(domain.id, e.target.checked)}
+        onChange={handleCheckboxClick}
         disabled={!domain.status}
+        onClick={handleCheckboxClick}
       />
       
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
@@ -148,7 +173,7 @@ const DomainCard = ({
             type="text"
             size="small"
             icon={copied ? <CheckOutlined style={{ color: '#52c41a' }} /> : <CopyOutlined />}
-            onClick={() => copyToClipboard(domain.domainName)}
+            onClick={(e) => copyToClipboard(domain.domainName, e)}
           />
         </Tooltip>
         <Tooltip title="Visit domain">
@@ -163,7 +188,7 @@ const DomainCard = ({
           type="text"
           size="small"
           icon={expanded ? <UpOutlined /> : <DownOutlined />}
-          onClick={() => setExpanded(!expanded)}
+          onClick={handleExpandClick}
         />
       </Space>
     </div>
@@ -242,7 +267,7 @@ const DomainCard = ({
       <Button
         {...buttonConfig}
         size="small"
-        onClick={() => onRequestBuy([domain])}
+        onClick={handleRequestClick}
         disabled={buttonConfig.disabled || !domain.status}
       >
         {buttonConfig.text}
@@ -256,9 +281,12 @@ const DomainCard = ({
       style={{ 
         margin: '4px 16px', 
         borderRadius: '8px',
-        opacity: domain.status ? 1 : 0.7
+        opacity: domain.status ? 1 : 0.7,
+        cursor: domain.status ? 'pointer' : 'default'
       }}
       bodyStyle={{ padding: '12px' }}
+      onClick={domain.status ? handleCardClick : undefined}
+      className={domain.status ? 'clickable-domain-card' : ''}
     >
       {renderFirstLine()}
       {expanded && renderExpandedContent()}

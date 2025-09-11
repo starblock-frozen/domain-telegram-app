@@ -7,17 +7,21 @@ import {
   Typography,
   Space,
   Radio,
-  Input
+  Input,
+  Modal
 } from 'antd';
 import { 
   ReloadOutlined, 
-  SearchOutlined
+  SearchOutlined,
+  WalletOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 import FilterPanel from './components/FilterPanel';
 import DomainList from './components/DomainList';
 import RequestModal from './components/RequestModal';
+import PaymentModal from './components/PaymentModal';
 import LoadingSpinner from './components/LoadingSpinner';
 import useTelegram from './hooks/useTelegram';
 import { domainAPI, ticketAPI } from './services/api';
@@ -37,6 +41,7 @@ function App() {
   const [requestLoading, setRequestLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [domainsToRequest, setDomainsToRequest] = useState([]);
 
   const [filters, setFilters] = useState({
@@ -189,16 +194,111 @@ function App() {
     setShowRequestModal(true);
   };
 
+  const checkDomainAvailability = async (domainNames) => {
+    try {
+      // Fetch latest domain data to check availability
+      const response = await domainAPI.getPublicDomains();
+      const latestDomains = response.data.data || [];
+      
+      const results = {
+        available: [],
+        sold: []
+      };
+
+      domainNames.forEach(domainName => {
+        const domain = latestDomains.find(d => d.domainName === domainName);
+        if (domain && domain.status) {
+          results.available.push(domainName);
+        } else {
+          results.sold.push(domainName);
+        }
+      });
+
+      return results;
+    } catch (error) {
+      console.error('Error checking domain availability:', error);
+      throw error;
+    }
+  };
+
   const handleConfirmRequest = async () => {
     if (!userId || domainsToRequest.length === 0) return;
 
     try {
       setRequestLoading(true);
       
+      const domainNames = domainsToRequest.map(domain => domain.domainName);
+      
+      // Check domain availability
+      const availabilityCheck = await checkDomainAvailability(domainNames);
+      
+      if (availabilityCheck.sold.length > 0) {
+        // Show warning modal for sold domains
+        Modal.warning({
+          title: 'Some Domains Are No Longer Available',
+          content: (
+            <div>
+              <p>The following domains have been sold:</p>
+              <ul>
+                {availabilityCheck.sold.map(domainName => (
+                  <li key={domainName} style={{ color: '#ff4d4f' }}>{domainName}</li>
+                ))}
+              </ul>
+              {availabilityCheck.available.length > 0 && (
+                <>
+                  <p>Available domains:</p>
+                  <ul>
+                    {availabilityCheck.available.map(domainName => (
+                      <li key={domainName} style={{ color: '#52c41a' }}>{domainName}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
+          ),
+          okText: 'OK',
+          centered: true,
+          onOk: () => {
+            // Update local domain states
+            setDomains(prevDomains => 
+              prevDomains.map(domain => 
+                availabilityCheck.sold.includes(domain.domainName) 
+                  ? { ...domain, status: false }
+                  : domain
+              )
+            );
+            
+            // Continue with available domains if any
+            if (availabilityCheck.available.length > 0) {
+              proceedWithRequest(domainsToRequest.filter(domain => 
+                availabilityCheck.available.includes(domain.domainName)
+              ));
+            } else {
+              setShowRequestModal(false);
+              setDomainsToRequest([]);
+            }
+          }
+        });
+        return;
+      }
+      
+      // All domains are available, proceed with request
+      await proceedWithRequest(domainsToRequest);
+      
+    } catch (error) {
+      console.error('Error creating ticket:', error);
+      message.error('Failed to send purchase request');
+    } finally {
+      setRequestLoading(false);
+    }
+  };
+
+  const proceedWithRequest = async (availableDomains) => {
+    try {
       const ticketData = {
         customer_id: username || userId.toString(),
-        request_domains: domainsToRequest.map(domain => domain.domainName),
-        price: domainsToRequest.reduce((sum, domain) => sum + (domain.price || 0), 0),
+        request_domains: availableDomains.map(domain => domain.domainName),
+        price: availableDomains.reduce((sum, domain) => sum + (domain.price || 0), 0),
         status: 'New'
       };
 
@@ -212,10 +312,7 @@ function App() {
       fetchTicketStatuses();
       
     } catch (error) {
-      console.error('Error creating ticket:', error);
-      message.error('Failed to send purchase request');
-    } finally {
-      setRequestLoading(false);
+      throw error;
     }
   };
 
@@ -232,6 +329,17 @@ function App() {
       return domain && domain.status;
     });
     setSelectedDomains(availableSelections);
+  };
+
+  const handleDomainCardClick = (domainId) => {
+    const domain = domains.find(d => d.id === domainId);
+    if (!domain || !domain.status) return;
+
+    if (selectedDomains.includes(domainId)) {
+      setSelectedDomains(selectedDomains.filter(id => id !== domainId));
+    } else {
+      setSelectedDomains([...selectedDomains, domainId]);
+    }
   };
 
   if (loading) {
@@ -293,13 +401,24 @@ function App() {
                 </Text>
               )}
             </div>
-            <Button
-              type="text"
-              icon={<ReloadOutlined />}
-              onClick={handleRefresh}
-              size="small"
-              style={{ color: 'rgba(255, 255, 255, 0.65)' }}
-            />
+            <Space>
+              <Button
+                type="text"
+                icon={<WalletOutlined />}
+                onClick={() => setShowPaymentModal(true)}
+                size="small"
+                style={{ color: 'rgba(255, 255, 255, 0.65)' }}
+                title="Payment Info"
+              />
+              <Button
+                type="text"
+                icon={<ReloadOutlined />}
+                onClick={handleRefresh}
+                size="small"
+                style={{ color: 'rgba(255, 255, 255, 0.65)' }}
+                title="Refresh"
+              />
+            </Space>
           </div>
           
           {/* Domain Search */}
@@ -366,9 +485,16 @@ function App() {
           onSelectionChange={handleSelectionChange}
           ticketStatuses={ticketStatuses}
           onRequestBuy={handleRequestBuy}
+          onDomainCardClick={handleDomainCardClick}
         />
 
-        {/* Request Modal */}
+        {/* Payment Modal */}
+        <PaymentModal
+          visible={showPaymentModal}
+          onCancel={() => setShowPaymentModal(false)}
+        />
+
+        {/* Request Confirmation Modal */}
         <RequestModal
           visible={showRequestModal}
           onCancel={() => {

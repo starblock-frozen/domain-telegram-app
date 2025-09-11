@@ -1655,3 +1655,107 @@ html, body, #root {
     min-height: 52px !important;
   }
 }
+
+/* Clickable domain card styles */
+.clickable-domain-card {
+  transition: all 0.2s ease !important;
+}
+
+.clickable-domain-card:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2) !important;
+  border-color: #1890ff !important;
+}
+
+.clickable-domain-card:active {
+  transform: translateY(0) !important;
+}
+
+/* Payment modal specific styles */
+.payment-modal .ant-modal-header {
+  background-color: #141414 !important;
+  border-bottom: 1px solid #303030 !important;
+}
+
+.payment-modal .ant-modal-body {
+  background-color: #141414 !important;
+  max-height: 70vh !important;
+  overflow-y: auto !important;
+}
+
+.payment-modal .ant-modal-footer {
+  background-color: #141414 !important;
+  border-top: 1px solid #303030 !important;
+}
+
+/* Request confirmation modal styles */
+.request-confirmation-modal .ant-modal-body {
+  padding: 20px !important;
+}
+
+.request-confirmation-modal .ant-modal-footer {
+  padding: 12px 20px !important;
+}
+
+/* Wallet button in header */
+.header-wallet-btn {
+  color: rgba(255, 255, 255, 0.65) !important;
+  transition: all 0.2s ease !important;
+}
+
+.header-wallet-btn:hover {
+  color: #1890ff !important;
+  background-color: rgba(24, 144, 255, 0.1) !important;
+}
+
+/* Enhanced checkbox interaction */
+.clickable-domain-card .ant-checkbox-wrapper {
+  pointer-events: none;
+}
+
+.clickable-domain-card .ant-checkbox {
+  pointer-events: all;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 480px) {
+  .clickable-domain-card:hover {
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15) !important;
+  }
+  
+  .payment-modal .ant-modal-body {
+    max-height: 60vh !important;
+  }
+}
+
+/* Accessibility improvements */
+.clickable-domain-card:focus-visible {
+  outline: 2px solid #1890ff !important;
+  outline-offset: 2px !important;
+}
+
+/* Smooth transitions for all interactive elements */
+.clickable-domain-card * {
+  transition: all 0.2s ease !important;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .clickable-domain-card:hover {
+    border-width: 2px !important;
+    border-color: #1890ff !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .clickable-domain-card,
+  .header-wallet-btn {
+    transition: none !important;
+  }
+  
+  .clickable-domain-card:hover {
+    transform: none !important;
+  }
+}

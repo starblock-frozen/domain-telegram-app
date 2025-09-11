@@ -25,7 +25,8 @@ const DomainList = ({
   selectedDomains, 
   onSelectionChange, 
   ticketStatuses,
-  onRequestBuy 
+  onRequestBuy,
+  onDomainCardClick
 }) => {
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -212,6 +213,7 @@ const DomainList = ({
             onSelect={handleDomainSelect}
             ticketStatus={ticketStatuses[domain.domainName]}
             onRequestBuy={onRequestBuy}
+            onCardClick={onDomainCardClick}
           />
         ))}
       </div>
