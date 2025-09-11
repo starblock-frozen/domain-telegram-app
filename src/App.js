@@ -44,6 +44,14 @@ function App() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [domainsToRequest, setDomainsToRequest] = useState([]);
 
+  // Warning Modal State
+  const [warningModalVisible, setWarningModalVisible] = useState(false);
+  const [warningModalData, setWarningModalData] = useState({ 
+    soldDomains: [], 
+    availableDomains: [], 
+    callback: null 
+  });
+
   const [filters, setFilters] = useState({
     domainName: '',
     countries: [],
@@ -196,9 +204,14 @@ function App() {
 
   const checkDomainAvailability = async (domainNames) => {
     try {
+      console.log('Checking availability for domains:', domainNames);
+      
       // Fetch latest domain data to check availability
       const response = await domainAPI.getPublicDomains();
-      const latestDomains = response.data.data || [];
+      console.log('API Response:', response);
+      
+      const latestDomains = response.data?.data || response.data || [];
+      console.log('Latest domains from API:', latestDomains);
       
       const results = {
         available: [],
@@ -207,21 +220,35 @@ function App() {
 
       domainNames.forEach(domainName => {
         const domain = latestDomains.find(d => d.domainName === domainName);
-        if (domain && domain.status) {
-          results.available.push(domainName);
+        console.log(`Domain ${domainName}:`, domain);
+        
+        if (domain) {
+          if (domain.status === true) {
+            results.available.push(domainName);
+          } else {
+            results.sold.push(domainName);
+          }
         } else {
+          // If domain not found in latest data, consider it sold
           results.sold.push(domainName);
         }
       });
 
+      console.log('Availability check results:', results);
       return results;
     } catch (error) {
       console.error('Error checking domain availability:', error);
-      throw error;
+      // If API fails, assume all domains are still available to avoid blocking the user
+      return {
+        available: domainNames,
+        sold: []
+      };
     }
   };
 
   const updateDomainStatus = (domainNames, status) => {
+    console.log('Updating domain status:', domainNames, 'to', status);
+    
     setDomains(prevDomains => 
       prevDomains.map(domain => 
         domainNames.includes(domain.domainName) 
@@ -243,87 +270,32 @@ function App() {
   };
 
   const showSoldDomainsWarning = (soldDomains, availableDomains, callback) => {
-    Modal.warning({
-      title: 'Domain Availability Update',
-      width: '90%',
-      style: { maxWidth: '400px' },
-      centered: true,
-      icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
-      content: (
-        <div>
-          <div style={{ marginBottom: '16px' }}>
-            <Text strong style={{ color: '#ff4d4f', display: 'block', marginBottom: '8px' }}>
-              The following domains are no longer available:
-            </Text>
-            <div style={{ 
-              backgroundColor: '#2a1215', 
-              border: '1px solid #ff4d4f', 
-              borderRadius: '6px', 
-              padding: '8px',
-              marginBottom: '12px'
-            }}>
-              {soldDomains.map(domainName => (
-                <div key={domainName} style={{ 
-                  color: '#ff4d4f', 
-                  fontSize: '13px',
-                  marginBottom: '4px'
-                }}>
-                  • {domainName}
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          {availableDomains.length > 0 && (
-            <div>
-              <Text strong style={{ color: '#52c41a', display: 'block', marginBottom: '8px' }}>
-                Still available domains:
-              </Text>
-              <div style={{ 
-                backgroundColor: '#162312', 
-                border: '1px solid #52c41a', 
-                borderRadius: '6px', 
-                padding: '8px'
-              }}>
-                {availableDomains.map(domainName => (
-                  <div key={domainName} style={{ 
-                    color: '#52c41a', 
-                    fontSize: '13px',
-                    marginBottom: '4px'
-                  }}>
-                    • {domainName}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          <div style={{ 
-            marginTop: '16px', 
-            padding: '12px', 
-            backgroundColor: '#1f1f1f', 
-            borderRadius: '6px',
-            border: '1px solid #434343'
-          }}>
-            <Text style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.65)' }}>
-              {availableDomains.length > 0 
-                ? 'Would you like to continue with the available domains?' 
-                : 'All selected domains have been sold. Please select other domains.'}
-            </Text>
-          </div>
-        </div>
-      ),
-      okText: 'OK',
-      onOk: () => {
-        // Update domain statuses
-        updateDomainStatus(soldDomains, false);
-        
-        // Execute callback if provided
-        if (callback) {
-          callback();
-        }
-      }
-    });
+    console.log('Showing sold domains warning:', { soldDomains, availableDomains });
+    
+    setWarningModalData({ soldDomains, availableDomains, callback });
+    setWarningModalVisible(true);
+  };
+
+  const handleWarningModalOk = () => {
+    console.log('Warning modal OK clicked');
+    
+    // Update domain statuses
+    updateDomainStatus(warningModalData.soldDomains, false);
+    
+    // Execute callback if provided
+    if (warningModalData.callback) {
+      warningModalData.callback();
+    }
+    
+    // Close modal
+    setWarningModalVisible(false);
+    setWarningModalData({ soldDomains: [], availableDomains: [], callback: null });
+  };
+
+  const handleWarningModalCancel = () => {
+    setWarningModalVisible(false);
+    setWarningModalData({ soldDomains: [], availableDomains: [], callback: null });
+    setRequestLoading(false);
   };
 
   const handleConfirmRequest = async () => {
@@ -331,46 +303,59 @@ function App() {
 
     try {
       setRequestLoading(true);
+      console.log('Starting request confirmation for domains:', domainsToRequest);
       
       const domainNames = domainsToRequest.map(domain => domain.domainName);
+      console.log('Domain names to check:', domainNames);
       
       // Check domain availability
       const availabilityCheck = await checkDomainAvailability(domainNames);
+      console.log('Availability check completed:', availabilityCheck);
       
       if (availabilityCheck.sold.length > 0) {
+        console.log('Found sold domains, showing warning modal');
+        
         // Show warning modal for sold domains
         showSoldDomainsWarning(
           availabilityCheck.sold, 
           availabilityCheck.available,
           () => {
+            console.log('Warning modal callback executed');
             // Continue with available domains if any
             if (availabilityCheck.available.length > 0) {
               const availableDomainsToRequest = domainsToRequest.filter(domain => 
                 availabilityCheck.available.includes(domain.domainName)
               );
+              console.log('Proceeding with available domains:', availableDomainsToRequest);
               proceedWithRequest(availableDomainsToRequest);
             } else {
+              console.log('No available domains, closing modal');
               setShowRequestModal(false);
               setDomainsToRequest([]);
             }
           }
         );
+        
+        // Important: Don't return here, let the modal show
+        setRequestLoading(false);
         return;
       }
       
+      console.log('All domains available, proceeding with request');
       // All domains are available, proceed with request
       await proceedWithRequest(domainsToRequest);
       
     } catch (error) {
-      console.error('Error creating ticket:', error);
-      message.error('Failed to send purchase request');
-    } finally {
+      console.error('Error in handleConfirmRequest:', error);
+      message.error('Failed to send purchase request: ' + error.message);
       setRequestLoading(false);
     }
   };
 
   const proceedWithRequest = async (availableDomains) => {
     try {
+      console.log('Proceeding with request for domains:', availableDomains);
+      
       const ticketData = {
         customer_id: username || userId.toString(),
         request_domains: availableDomains.map(domain => domain.domainName),
@@ -378,6 +363,7 @@ function App() {
         status: 'New'
       };
 
+      console.log('Creating ticket with data:', ticketData);
       await ticketAPI.createTicket(ticketData);
       
       message.success('Purchase request sent successfully!');
@@ -388,7 +374,10 @@ function App() {
       fetchTicketStatuses();
       
     } catch (error) {
+      console.error('Error in proceedWithRequest:', error);
       throw error;
+    } finally {
+      setRequestLoading(false);
     }
   };
 
@@ -469,7 +458,7 @@ function App() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <Title level={4} style={{ margin: 0, color: '#1890ff' }}>
-                Domain Store
+                WebShell Store
               </Title>
               {user && (
                 <Text type="secondary" style={{ fontSize: '12px' }}>
@@ -576,11 +565,99 @@ function App() {
           onCancel={() => {
             setShowRequestModal(false);
             setDomainsToRequest([]);
+            setRequestLoading(false);
           }}
           onConfirm={handleConfirmRequest}
           selectedDomains={domainsToRequest}
           loading={requestLoading}
         />
+
+        {/* Warning Modal for Sold Domains */}
+        <Modal
+          title={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ExclamationCircleOutlined style={{ color: '#faad14', fontSize: '18px' }} />
+              <span>Domain Availability Update</span>
+            </div>
+          }
+          open={warningModalVisible}
+          onOk={handleWarningModalOk}
+          onCancel={handleWarningModalCancel}
+          okText={warningModalData.availableDomains.length > 0 ? "Continue" : "OK"}
+          cancelText="Cancel"
+          centered
+          width="90%"
+          style={{ maxWidth: '400px' }}
+          zIndex={2000}
+          maskClosable={false}
+          closable={true}
+          destroyOnClose={true}
+          className="warning-modal"
+        >
+          <div>
+            <div style={{ marginBottom: '16px' }}>
+              <Text strong style={{ color: '#ff4d4f', display: 'block', marginBottom: '8px' }}>
+                The following domains are no longer available:
+              </Text>
+              <div style={{ 
+                backgroundColor: '#2a1215', 
+                border: '1px solid #ff4d4f', 
+                borderRadius: '6px', 
+                padding: '8px',
+                marginBottom: '12px'
+              }}>
+                {warningModalData.soldDomains.map(domainName => (
+                  <div key={domainName} style={{ 
+                    color: '#ff4d4f', 
+                    fontSize: '13px',
+                    marginBottom: '4px'
+                  }}>
+                    • {domainName}
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {warningModalData.availableDomains.length > 0 && (
+              <div>
+                <Text strong style={{ color: '#52c41a', display: 'block', marginBottom: '8px' }}>
+                  Still available domains:
+                </Text>
+                <div style={{ 
+                  backgroundColor: '#162312', 
+                  border: '1px solid #52c41a', 
+                  borderRadius: '6px', 
+                  padding: '8px'
+                }}>
+                  {warningModalData.availableDomains.map(domainName => (
+                    <div key={domainName} style={{ 
+                      color: '#52c41a', 
+                      fontSize: '13px',
+                      marginBottom: '4px'
+                    }}>
+                      • {domainName}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div style={{ 
+              marginTop: '16px', 
+              padding: '12px', 
+              backgroundColor: '#1f1f1f', 
+              borderRadius: '6px',
+              border: '1px solid #434343'
+            }}>
+              <Text style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.65)' }}>
+                {warningModalData.availableDomains.length > 0 
+                  ? 'Would you like to continue with the available domains?' 
+                  : 'All selected domains have been sold. Please select other domains.'}
+              </Text>
+            </div>
+          </div>
+        </Modal>
+
       </div>
     </ConfigProvider>
   );
