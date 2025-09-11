@@ -221,6 +221,111 @@ function App() {
     }
   };
 
+  const updateDomainStatus = (domainNames, status) => {
+    setDomains(prevDomains => 
+      prevDomains.map(domain => 
+        domainNames.includes(domain.domainName) 
+          ? { ...domain, status: status }
+          : domain
+      )
+    );
+
+    // Remove sold domains from selected domains
+    if (!status) {
+      const soldDomainIds = domains
+        .filter(domain => domainNames.includes(domain.domainName))
+        .map(domain => domain.id);
+      
+      setSelectedDomains(prevSelected => 
+        prevSelected.filter(id => !soldDomainIds.includes(id))
+      );
+    }
+  };
+
+  const showSoldDomainsWarning = (soldDomains, availableDomains, callback) => {
+    Modal.warning({
+      title: 'Domain Availability Update',
+      width: '90%',
+      style: { maxWidth: '400px' },
+      centered: true,
+      icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
+      content: (
+        <div>
+          <div style={{ marginBottom: '16px' }}>
+            <Text strong style={{ color: '#ff4d4f', display: 'block', marginBottom: '8px' }}>
+              The following domains are no longer available:
+            </Text>
+            <div style={{ 
+              backgroundColor: '#2a1215', 
+              border: '1px solid #ff4d4f', 
+              borderRadius: '6px', 
+              padding: '8px',
+              marginBottom: '12px'
+            }}>
+              {soldDomains.map(domainName => (
+                <div key={domainName} style={{ 
+                  color: '#ff4d4f', 
+                  fontSize: '13px',
+                  marginBottom: '4px'
+                }}>
+                  • {domainName}
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {availableDomains.length > 0 && (
+            <div>
+              <Text strong style={{ color: '#52c41a', display: 'block', marginBottom: '8px' }}>
+                Still available domains:
+              </Text>
+              <div style={{ 
+                backgroundColor: '#162312', 
+                border: '1px solid #52c41a', 
+                borderRadius: '6px', 
+                padding: '8px'
+              }}>
+                {availableDomains.map(domainName => (
+                  <div key={domainName} style={{ 
+                    color: '#52c41a', 
+                    fontSize: '13px',
+                    marginBottom: '4px'
+                  }}>
+                    • {domainName}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div style={{ 
+            marginTop: '16px', 
+            padding: '12px', 
+            backgroundColor: '#1f1f1f', 
+            borderRadius: '6px',
+            border: '1px solid #434343'
+          }}>
+            <Text style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.65)' }}>
+              {availableDomains.length > 0 
+                ? 'Would you like to continue with the available domains?' 
+                : 'All selected domains have been sold. Please select other domains.'}
+            </Text>
+          </div>
+        </div>
+      ),
+      okText: 'OK',
+      onOk: () => {
+        // Update domain statuses
+        updateDomainStatus(soldDomains, false);
+        
+        // Execute callback if provided
+        if (callback) {
+          callback();
+        }
+      }
+    });
+  };
+
   const handleConfirmRequest = async () => {
     if (!userId || domainsToRequest.length === 0) return;
 
@@ -234,51 +339,22 @@ function App() {
       
       if (availabilityCheck.sold.length > 0) {
         // Show warning modal for sold domains
-        Modal.warning({
-          title: 'Some Domains Are No Longer Available',
-          content: (
-            <div>
-              <p>The following domains have been sold:</p>
-              <ul>
-                {availabilityCheck.sold.map(domainName => (
-                  <li key={domainName} style={{ color: '#ff4d4f' }}>{domainName}</li>
-                ))}
-              </ul>
-              {availabilityCheck.available.length > 0 && (
-                <>
-                  <p>Available domains:</p>
-                  <ul>
-                    {availabilityCheck.available.map(domainName => (
-                      <li key={domainName} style={{ color: '#52c41a' }}>{domainName}</li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </div>
-          ),
-          okText: 'OK',
-          centered: true,
-          onOk: () => {
-            // Update local domain states
-            setDomains(prevDomains => 
-              prevDomains.map(domain => 
-                availabilityCheck.sold.includes(domain.domainName) 
-                  ? { ...domain, status: false }
-                  : domain
-              )
-            );
-            
+        showSoldDomainsWarning(
+          availabilityCheck.sold, 
+          availabilityCheck.available,
+          () => {
             // Continue with available domains if any
             if (availabilityCheck.available.length > 0) {
-              proceedWithRequest(domainsToRequest.filter(domain => 
+              const availableDomainsToRequest = domainsToRequest.filter(domain => 
                 availabilityCheck.available.includes(domain.domainName)
-              ));
+              );
+              proceedWithRequest(availableDomainsToRequest);
             } else {
               setShowRequestModal(false);
               setDomainsToRequest([]);
             }
           }
-        });
+        );
         return;
       }
       

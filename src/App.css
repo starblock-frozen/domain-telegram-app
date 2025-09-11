@@ -1759,3 +1759,212 @@ html, body, #root {
     transform: none !important;
   }
 }
+
+/* Enhanced warning modal styles */
+.ant-modal-warning .ant-modal-content {
+  background-color: #141414 !important;
+  border: 1px solid #faad14 !important;
+}
+
+.ant-modal-warning .ant-modal-header {
+  background-color: #141414 !important;
+  border-bottom: 1px solid #434343 !important;
+}
+
+.ant-modal-warning .ant-modal-body {
+  background-color: #141414 !important;
+  padding: 20px !important;
+}
+
+.ant-modal-warning .ant-modal-footer {
+  background-color: #141414 !important;
+  border-top: 1px solid #434343 !important;
+}
+
+.ant-modal-warning .ant-modal-confirm-title {
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+
+.ant-modal-warning .ant-modal-confirm-content {
+  color: rgba(255, 255, 255, 0.85) !important;
+  margin-top: 12px !important;
+}
+
+/* Domain status boxes in warning modal */
+.domain-status-box {
+  border-radius: 6px !important;
+  padding: 8px !important;
+  margin-bottom: 8px !important;
+  font-size: 13px !important;
+}
+
+.domain-status-box.sold {
+  background-color: #2a1215 !important;
+  border: 1px solid #ff4d4f !important;
+}
+
+.domain-status-box.available {
+  background-color: #162312 !important;
+  border: 1px solid #52c41a !important;
+}
+
+.domain-status-item {
+  margin-bottom: 4px !important;
+  font-size: 13px !important;
+}
+
+.domain-status-item.sold {
+  color: #ff4d4f !important;
+}
+
+.domain-status-item.available {
+  color: #52c41a !important;
+}
+
+/* Warning modal info box */
+.warning-info-box {
+  margin-top: 16px !important;
+  padding: 12px !important;
+  background-color: #1f1f1f !important;
+  border-radius: 6px !important;
+  border: 1px solid #434343 !important;
+}
+
+.warning-info-text {
+  font-size: 12px !important;
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+
+/* Enhanced modal buttons */
+.ant-modal-warning .ant-btn-primary {
+  background-color: #faad14 !important;
+  border-color: #faad14 !important;
+  color: #000 !important;
+  font-weight: 600 !important;
+}
+
+.ant-modal-warning .ant-btn-primary:hover {
+  background-color: #ffc53d !important;
+  border-color: #ffc53d !important;
+}
+
+/* Mobile responsive adjustments for warning modal */
+@media (max-width: 480px) {
+  .ant-modal-warning .ant-modal-body {
+    padding: 16px !important;
+  }
+  
+  .domain-status-item {
+    font-size: 12px !important;
+  }
+  
+  .warning-info-text {
+    font-size: 11px !important;
+  }
+  
+  .ant-modal-warning .ant-modal-confirm-title {
+    font-size: 14px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .ant-modal-warning .ant-modal-body {
+    padding: 12px !important;
+  }
+  
+  .domain-status-box {
+    padding: 6px !important;
+  }
+  
+  .warning-info-box {
+    padding: 8px !important;
+  }
+}
+
+/* Loading state for request confirmation */
+.request-loading-overlay {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000 !important;
+}
+
+/* Enhanced accessibility for warning modal */
+.ant-modal-warning:focus-visible {
+  outline: 2px solid #faad14 !important;
+  outline-offset: 2px !important;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .domain-status-box.sold {
+    border-width: 2px !important;
+    font-weight: bold !important;
+  }
+  
+  .domain-status-box.available {
+    border-width: 2px !important;
+    font-weight: bold !important;
+  }
+  
+  .ant-modal-warning .ant-modal-content {
+    border-width: 2px !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .ant-modal-warning .ant-modal-content {
+    animation: none !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .ant-modal-warning {
+    display: none !important;
+  }
+}
+
+/* Dark theme enhancements */
+@media (prefers-color-scheme: dark) {
+  .domain-status-box.sold {
+    background-color: #1a0d0f !important;
+  }
+  
+  .domain-status-box.available {
+    background-color: #0f1a0d !important;
+  }
+  
+  .warning-info-box {
+    background-color: #0f0f0f !important;
+  }
+}
+
+/* Smooth transitions */
+.domain-status-box,
+.warning-info-box {
+  transition: all 0.2s ease !important;
+}
+
+/* Custom scrollbar for warning modal content */
+.ant-modal-warning .ant-modal-body::-webkit-scrollbar {
+  width: 4px !important;
+}
+
+.ant-modal-warning .ant-modal-body::-webkit-scrollbar-thumb {
+  background-color: #434343 !important;
+  border-radius: 2px !important;
+}
+
+.ant-modal-warning .ant-modal-body::-webkit-scrollbar-thumb:hover {
+  background-color: #faad14 !important;
+}
