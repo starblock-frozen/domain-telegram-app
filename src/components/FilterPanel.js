@@ -23,7 +23,7 @@ const FilterPanel = ({
   domains,
   onToggle 
 }) => {
-  const categories = ['GOV', 'EDU', 'eCommerce', 'Commerce'];
+  const categories = ['GOV', 'EDU', 'NEWS', 'eCommerce', 'Commerce'];
   const countries = [...new Set(domains.map(domain => domain.country))].filter(Boolean).sort();
 
   const handleFilterChange = (key, value) => {
