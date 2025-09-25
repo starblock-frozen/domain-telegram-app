@@ -76,7 +76,7 @@ const DomainCard = ({
     }
   };
 
-  const getButtonConfig = () => {
+    const getButtonConfig = () => {
     switch (ticketStatus) {
       case 'Sold':
         return {
@@ -116,6 +116,19 @@ const DomainCard = ({
     } else {
       return `Posted: ${formatDate(domain.postDateTime)}`;
     }
+  };
+
+  const getTypeColor = (type) => {
+    const typeColors = {
+      'cPanel': '#1890ff',
+      'Plesk': '#52c41a',
+      'DirectAdmin': '#faad14',
+      'VestaCP': '#722ed1',
+      'Webshell': '#ff4d4f',
+      'WHM': '#13c2c2',
+      'Shell': '#ff4d4f'
+    };
+    return typeColors[type] || '#666666';
   };
 
   const buttonConfig = getButtonConfig();
@@ -213,6 +226,9 @@ const DomainCard = ({
           }>
             {domain.category}
           </Tag>
+          <Tag color={getTypeColor(domain.type || 'Shell')}>
+            {domain.type || 'Shell'}
+          </Tag>
           <Tag color={domain.status ? 'success' : 'error'}>
             {domain.status ? 'Available' : 'Sold'}
           </Tag>
@@ -258,7 +274,7 @@ const DomainCard = ({
       gap: 8
     }}>
       <Text strong style={{ color: '#52c41a', fontSize: '16px' }}>
-        ${(domain.price || 0).toLocaleString()}
+        ${(domain.displayPrice || domain.price || 0).toLocaleString()}
       </Text>
       
       <Text type="secondary" style={{ fontSize: '12px', flex: 1, textAlign: 'center' }}>

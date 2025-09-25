@@ -1,29 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Button, 
-  Space, 
-  Typography, 
-  message, 
+import {
+  Button,
+  Space,
+  Typography,
+  message,
   Empty,
   FloatButton,
   Modal
 } from 'antd';
-import { 
-  DownloadOutlined, 
-  CopyOutlined, 
+import {
+  DownloadOutlined,
+  CopyOutlined,
   ShoppingCartOutlined,
   UpOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons';
 import DomainCard from './DomainCard';
-import { exportDomainsToCSV } from '../utils/csvExport';
+import {
+  exportDomainsToCSV,
+  exportDomainsToDetailedCSV,
+  exportSelectedDomainsToCSV,
+  exportDomainStatistics
+} from '../utils/csvExport';
 
 const { Text } = Typography;
 
-const DomainList = ({ 
-  domains, 
-  selectedDomains, 
-  onSelectionChange, 
+const DomainList = ({
+  domains,
+  selectedDomains,
+  onSelectionChange,
   ticketStatuses,
   onRequestBuy,
   onDomainCardClick
@@ -60,8 +65,40 @@ const DomainList = ({
   };
 
   const handleExportCSV = () => {
-    exportDomainsToCSV(domains, 'domains.csv');
-    message.success('Domains exported successfully!');
+    try {
+      exportDomainsToCSV(domains, 'domains.csv');
+      message.success('Domains exported successfully!');
+    } catch (error) {
+      message.error('Failed to export domains: ' + error.message);
+    }
+  };
+
+  // You can also add additional export options:
+  const handleExportDetailedCSV = () => {
+    try {
+      exportDomainsToDetailedCSV(domains, 'domains_detailed.csv');
+      message.success('Detailed domains export completed!');
+    } catch (error) {
+      message.error('Failed to export domains: ' + error.message);
+    }
+  };
+
+  const handleExportSelectedCSV = () => {
+    try {
+      const count = exportSelectedDomainsToCSV(domains, selectedDomains, 'selected_domains.csv');
+      message.success(`${count} selected domains exported successfully!`);
+    } catch (error) {
+      message.error('Failed to export selected domains: ' + error.message);
+    }
+  };
+
+  const handleExportStatistics = () => {
+    try {
+      const stats = exportDomainStatistics(domains, 'domain_statistics.csv');
+      message.success(`Statistics exported! Total: ${stats.total} domains`);
+    } catch (error) {
+      message.error('Failed to export statistics: ' + error.message);
+    }
   };
 
   const handleCopySelected = async () => {
@@ -83,23 +120,23 @@ const DomainList = ({
   };
 
   const handleRequestSelected = () => {
-    const selectedDomainObjects = domains.filter(domain => 
+    const selectedDomainObjects = domains.filter(domain =>
       selectedDomains.includes(domain.id)
     );
-    
+
     // Check for unavailable or already requested/bought domains
     const unavailableDomains = selectedDomainObjects.filter(domain => !domain.status);
     const requestedOrBoughtDomains = selectedDomainObjects.filter(domain => {
       const status = ticketStatuses[domain.domainName];
       return status === 'New' || status === 'Read' || status === 'Sold';
     });
-    
+
     const problematicDomains = [...unavailableDomains, ...requestedOrBoughtDomains];
-    
+
     if (problematicDomains.length > 0) {
       const soldDomains = unavailableDomains.map(d => d.domainName);
       const requestedDomains = requestedOrBoughtDomains.map(d => d.domainName);
-      
+
       let content = '';
       if (soldDomains.length > 0) {
         content += `Sold domains: ${soldDomains.join(', ')}\n`;
@@ -107,7 +144,7 @@ const DomainList = ({
       if (requestedDomains.length > 0) {
         content += `Already requested/bought domains: ${requestedDomains.join(', ')}`;
       }
-      
+
       Modal.warning({
         title: 'Cannot Request Selected Domains',
         content: content,
@@ -117,11 +154,11 @@ const DomainList = ({
       });
       return;
     }
-    
-    const availableSelectedDomains = selectedDomainObjects.filter(domain => 
+
+    const availableSelectedDomains = selectedDomainObjects.filter(domain =>
       domain.status && !ticketStatuses[domain.domainName]
     );
-    
+
     if (availableSelectedDomains.length > 0) {
       onRequestBuy(availableSelectedDomains);
     } else {
@@ -134,7 +171,7 @@ const DomainList = ({
   };
 
   const availableDomainsCount = domains.filter(domain => domain.status).length;
-  const allAvailableSelected = availableDomainsCount > 0 && 
+  const allAvailableSelected = availableDomainsCount > 0 &&
     selectedDomains.length === availableDomainsCount &&
     selectedDomains.every(id => {
       const domain = domains.find(d => d.id === id);
@@ -144,7 +181,7 @@ const DomainList = ({
   if (domains.length === 0) {
     return (
       <div style={{ padding: '40px 16px', textAlign: 'center' }}>
-        <Empty 
+        <Empty
           description="No domains found"
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         />
@@ -155,9 +192,9 @@ const DomainList = ({
   return (
     <div>
       {/* Action Bar */}
-      <div style={{ 
-        padding: '8px 16px', 
-        backgroundColor: '#141414', 
+      <div style={{
+        padding: '8px 16px',
+        backgroundColor: '#141414',
         borderBottom: '1px solid #303030',
         position: 'sticky',
         top: 0,
@@ -189,7 +226,7 @@ const DomainList = ({
             </Button>
           </Space>
         </div>
-        
+
         {selectedDomains.length > 0 && (
           <Button
             type="primary"

@@ -8,13 +8,15 @@ import {
   Space,
   Radio,
   Input,
-  Modal
+  Modal,
+  Select
 } from 'antd';
 import { 
   ReloadOutlined, 
   SearchOutlined,
   WalletOutlined,
-  ExclamationCircleOutlined
+  ExclamationCircleOutlined,
+  SortAscendingOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -30,6 +32,7 @@ import { isToday } from './utils/dateUtils';
 import './App.css';
 
 const { Title, Text } = Typography;
+const { Option } = Select;
 
 function App() {
   const { user, username, userId } = useTelegram();
@@ -60,12 +63,14 @@ function App() {
     daRange: [0, 100],
     paRange: [0, 100],
     ssRange: [0, 100],
+    domainType: 'good', // 'good' or 'all'
+    sortBy: 'newest' // 'newest', 'oldest', 'da_high', 'da_low', 'price_high', 'price_low'
   });
 
   // Fetch domains on component mount
   useEffect(() => {
     fetchDomains();
-  }, []);
+  }, [filters.domainType]);
 
   // Apply filters when domains or filters change
   useEffect(() => {
@@ -82,8 +87,23 @@ function App() {
   const fetchDomains = async () => {
     try {
       setLoading(true);
-      const response = await domainAPI.getPublicDomains();
-      setDomains(response.data.data || []);
+      let response;
+      
+      if (filters.domainType === 'good') {
+        response = await domainAPI.getPublicDomains();
+      } else {
+        response = await domainAPI.getAllDomains();
+      }
+      
+      const domainsData = response.data.data || [];
+      
+      // Transform price for display (if price is 1, show as 10)
+      const transformedDomains = domainsData.map(domain => ({
+        ...domain,
+        displayPrice: domain.price === 1 ? 10 : domain.price
+      }));
+      
+      setDomains(transformedDomains);
     } catch (error) {
       console.error('Error fetching domains:', error);
       message.error('Failed to fetch domains');
@@ -115,6 +135,35 @@ function App() {
       setTicketStatuses(statuses);
     } catch (error) {
       console.error('Error fetching ticket statuses:', error);
+    }
+  };
+
+  const sortDomains = (domainsToSort, sortBy) => {
+    const sorted = [...domainsToSort];
+    
+    switch (sortBy) {
+      case 'newest':
+        return sorted.sort((a, b) => {
+          const dateA = a.postDateTime || a.createdAt || '0';
+          const dateB = b.postDateTime || b.createdAt || '0';
+          return new Date(dateB) - new Date(dateA);
+        });
+      case 'oldest':
+        return sorted.sort((a, b) => {
+          const dateA = a.postDateTime || a.createdAt || '0';
+          const dateB = b.postDateTime || b.createdAt || '0';
+          return new Date(dateA) - new Date(dateB);
+        });
+      case 'da_high':
+        return sorted.sort((a, b) => (b.da || 0) - (a.da || 0));
+      case 'da_low':
+        return sorted.sort((a, b) => (a.da || 0) - (b.da || 0));
+      case 'price_high':
+        return sorted.sort((a, b) => (b.displayPrice || 0) - (a.displayPrice || 0));
+      case 'price_low':
+        return sorted.sort((a, b) => (a.displayPrice || 0) - (b.displayPrice || 0));
+      default:
+        return sorted;
     }
   };
 
@@ -160,6 +209,9 @@ function App() {
       (domain.ss || 0) >= filters.ssRange[0] && (domain.ss || 0) <= filters.ssRange[1]
     );
 
+    // Apply sorting
+    filtered = sortDomains(filtered, filters.sortBy);
+
     setFilteredDomains(filtered);
   };
 
@@ -176,6 +228,8 @@ function App() {
       daRange: [0, 100],
       paRange: [0, 100],
       ssRange: [0, 100],
+      domainType: filters.domainType, // Keep domain type
+      sortBy: 'newest'
     });
   };
 
@@ -193,6 +247,20 @@ function App() {
     }));
   };
 
+  const handleDomainTypeChange = (e) => {
+    setFilters(prev => ({
+      ...prev,
+      domainType: e.target.value
+    }));
+  };
+
+  const handleSortChange = (value) => {
+    setFilters(prev => ({
+      ...prev,
+      sortBy: value
+    }));
+  };
+
   const handleRequestBuy = (domainsToRequest) => {
     if (!userId) {
       message.error('Telegram user information not available');
@@ -207,7 +275,13 @@ function App() {
       console.log('Checking availability for domains:', domainNames);
       
       // Fetch latest domain data to check availability
-      const response = await domainAPI.getPublicDomains();
+      let response;
+      if (filters.domainType === 'good') {
+        response = await domainAPI.getPublicDomains();
+      } else {
+        response = await domainAPI.getAllDomains();
+      }
+      
       console.log('API Response:', response);
       
       const latestDomains = response.data?.data || response.data || [];
@@ -359,7 +433,7 @@ function App() {
       const ticketData = {
         customer_id: username || userId.toString(),
         request_domains: availableDomains.map(domain => domain.domainName),
-        price: availableDomains.reduce((sum, domain) => sum + (domain.price || 0), 0),
+        price: availableDomains.reduce((sum, domain) => sum + (domain.displayPrice || 0), 0),
         status: 'New'
       };
 
@@ -505,12 +579,71 @@ function App() {
           </div>
         </div>
 
-        {/* Status Filter */}
+        {/* Domain Type Selection with Glowing Effect */}
+        <div className="domain-type-selection" style={{ 
+          padding: '12px 16px', 
+          backgroundColor: '#141414', 
+          borderBottom: '1px solid #303030',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{ marginBottom: 8 }}>
+            <Text strong style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.85)' }}>
+              Domain Selection
+            </Text>
+          </div>
+          <Radio.Group
+            value={filters.domainType}
+            onChange={handleDomainTypeChange}
+            buttonStyle="solid"
+            size="small"
+            style={{ width: '100%', marginBottom: 8 }}
+            className="glowing-radio-group"
+          >
+            <Radio.Button value="good" className="glowing-radio-button">
+              Show Good Domains
+            </Radio.Button>
+            <Radio.Button value="all" className="glowing-radio-button">
+              Show All Domains
+            </Radio.Button>
+          </Radio.Group>
+          
+          {/* Flowing Text */}
+          <div className="flowing-text-container">
+            <div className="flowing-text">
+              💡 If you want to buy bulk domains, please click the "Show All Domains" button for complete inventory access
+            </div>
+          </div>
+        </div>
+
+        {/* Sort and Status Filter */}
         <div style={{ 
           padding: '8px 16px', 
           backgroundColor: '#141414', 
           borderBottom: '1px solid #303030'
         }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <div style={{ flex: 1 }}>
+              <Text strong style={{ fontSize: '12px', display: 'block', marginBottom: 4 }}>
+                Sort By
+              </Text>
+              <Select
+                value={filters.sortBy}
+                onChange={handleSortChange}
+                size="small"
+                style={{ width: '100%' }}
+                suffixIcon={<SortAscendingOutlined />}
+              >
+                <Option value="newest">Newest to Oldest</Option>
+                <Option value="oldest">Oldest to Newest</Option>
+                <Option value="da_high">DA (High to Low)</Option>
+                <Option value="da_low">DA (Low to High)</Option>
+                <Option value="price_high">Price (High to Low)</Option>
+                <Option value="price_low">Price (Low to High)</Option>
+              </Select>
+            </div>
+          </div>
+          
           <div style={{ marginBottom: 4 }}>
             <Text strong style={{ fontSize: '12px' }}>Domain Status</Text>
           </div>

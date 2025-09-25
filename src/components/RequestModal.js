@@ -4,7 +4,7 @@ import { Modal, Typography, Button, Divider } from 'antd';
 const { Text } = Typography;
 
 const RequestModal = ({ visible, onCancel, onConfirm, selectedDomains, loading }) => {
-  const totalPrice = selectedDomains.reduce((sum, domain) => sum + (domain.price || 0), 0);
+  const totalPrice = selectedDomains.reduce((sum, domain) => sum + (domain.displayPrice || domain.price || 0), 0);
 
   return (
     <Modal
@@ -37,7 +37,17 @@ const RequestModal = ({ visible, onCancel, onConfirm, selectedDomains, loading }
               borderRadius: '4px', 
               marginBottom: 4 
             }}>
-              <Text>{domain.domainName} - ${domain.price}</Text>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <Text>{domain.domainName}</Text>
+                  <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.65)' }}>
+                    {domain.type || 'Shell'} • {domain.country} • {domain.category}
+                  </div>
+                </div>
+                <Text strong style={{ color: '#52c41a' }}>
+                  ${domain.displayPrice || domain.price}
+                </Text>
+              </div>
             </div>
           ))}
         </div>

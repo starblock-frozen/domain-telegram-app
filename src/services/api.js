@@ -11,6 +11,7 @@ const api = axios.create({
 
 export const domainAPI = {
   getPublicDomains: () => api.get('/domains/public'),
+  getAllDomains: () => api.get('/domains/all'), // New endpoint for all domains
 };
 
 export const ticketAPI = {
