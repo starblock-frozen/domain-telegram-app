@@ -9,12 +9,12 @@ const PaymentModal = ({ visible, onCancel }) => {
   const [copiedStates, setCopiedStates] = useState({});
 
   const walletAddresses = {
-    BTC: 'bc1q53fnwtec9mmawqwg70hxaujfhycqhcgddykv0a',
-    'TRC20 USDT': 'TPVbi34oNsj2i3Gb9YSGYEKycu2QrnSHVr',
-    'ERC20 USDT': '0x94591187f253A688D2751af08998E2185A7f85f4',
-    'BEP20 USDT': '0x9E3183FF131D597dAC709D26B4c1F43b1271e3fA',
+    BTC: 'bc1qfyapmuph3a43qpysdncre5uvpsjn9s6n0xj0yh',
+    'TRC20 USDT': 'TFi6Wvd74wPPtcgWnhFRVP7vtatnKCjmm4',
+    'ERC20 USDT': '0x74af87a1372d9e510a315e94d4614295672c66d5',
+    'BEP20 USDT': '0xd3e99b545527b546118dad2d1873da8f969ab04b',
     LTC: 'ltc1qw45xp50rh8efh38eu09dxvwgguwqgj6daf906v',
-    'SOL USDT(USDC)': 'GatJFDdyr43phMEB9V67iyVoH4K6717E1Shch3SLhpkf'
+    'SOL USDT(USDC)': '7X856U4EjMxxfKoEWtFNd9Ep5qXScLx5U64GStyHCaqX'
   };
 
   const copyToClipboard = async (text, key) => {
