@@ -2225,3 +2225,42 @@ html, body, #root {
   background-color: rgba(24, 144, 255, 0.2) !important;
   font-weight: 600 !important;
 }
+
+/* Pagination Button Hover Effects */
+.pagination-mobile button:hover:not(:disabled) {
+  background-color: #1890ff !important;
+  border-color: #1890ff !important;
+  color: #fff !important;
+}
+
+.pagination-mobile button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+/* Page number buttons touch feedback */
+@media (hover: none) {
+  .pagination-mobile button:active:not(:disabled) {
+    background-color: #1890ff !important;
+    border-color: #1890ff !important;
+  }
+}
+
+/* Smooth scrolling for page numbers */
+.pagination-mobile > div::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for Firefox */
+.pagination-mobile > div {
+  scrollbar-width: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 360px) {
+  .pagination-mobile button {
+    min-width: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 12px !important;
+  }
+}

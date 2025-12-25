@@ -16,6 +16,7 @@ import {
   ExclamationCircleOutlined
 } from '@ant-design/icons';
 import DomainCard from './DomainCard';
+import PaginationBar from './PaginationBar';
 import {
   exportDomainsToCSV,
   exportDomainsToDetailedCSV,
@@ -27,11 +28,18 @@ const { Text } = Typography;
 
 const DomainList = ({
   domains,
+  allDomains = [],
   selectedDomains,
   onSelectionChange,
   ticketStatuses,
   onRequestBuy,
-  onDomainCardClick
+  onDomainCardClick,
+  // Pagination props
+  currentPage = 1,
+  pageSize = 25,
+  totalDomains = 0,
+  onPageChange,
+  onPageSizeChange
 }) => {
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -44,15 +52,34 @@ const DomainList = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Use allDomains for operations that need all filtered domains
+  const domainsForOperations = allDomains.length > 0 ? allDomains : domains;
+
   const handleSelectAll = (checked) => {
     if (checked) {
-      // Only select available domains
-      const availableDomainIds = domains
+      // Select all available domains from ALL filtered domains
+      const availableDomainIds = domainsForOperations
         .filter(domain => domain.status)
         .map(domain => domain.id);
       onSelectionChange(availableDomainIds);
     } else {
       onSelectionChange([]);
+    }
+  };
+
+  const handleSelectCurrentPage = (checked) => {
+    if (checked) {
+      // Select available domains from current page only
+      const currentPageIds = domains
+        .filter(domain => domain.status)
+        .map(domain => domain.id);
+      const newSelection = [...new Set([...selectedDomains, ...currentPageIds])];
+      onSelectionChange(newSelection);
+    } else {
+      // Unselect domains from current page
+      const currentPageIds = domains.map(domain => domain.id);
+      const newSelection = selectedDomains.filter(id => !currentPageIds.includes(id));
+      onSelectionChange(newSelection);
     }
   };
 
@@ -66,17 +93,16 @@ const DomainList = ({
 
   const handleExportCSV = () => {
     try {
-      exportDomainsToCSV(domains, 'domains.csv');
+      exportDomainsToCSV(domainsForOperations, 'domains.csv');
       message.success('Domains exported successfully!');
     } catch (error) {
       message.error('Failed to export domains: ' + error.message);
     }
   };
 
-  // You can also add additional export options:
   const handleExportDetailedCSV = () => {
     try {
-      exportDomainsToDetailedCSV(domains, 'domains_detailed.csv');
+      exportDomainsToDetailedCSV(domainsForOperations, 'domains_detailed.csv');
       message.success('Detailed domains export completed!');
     } catch (error) {
       message.error('Failed to export domains: ' + error.message);
@@ -85,7 +111,7 @@ const DomainList = ({
 
   const handleExportSelectedCSV = () => {
     try {
-      const count = exportSelectedDomainsToCSV(domains, selectedDomains, 'selected_domains.csv');
+      const count = exportSelectedDomainsToCSV(domainsForOperations, selectedDomains, 'selected_domains.csv');
       message.success(`${count} selected domains exported successfully!`);
     } catch (error) {
       message.error('Failed to export selected domains: ' + error.message);
@@ -94,7 +120,7 @@ const DomainList = ({
 
   const handleExportStatistics = () => {
     try {
-      const stats = exportDomainStatistics(domains, 'domain_statistics.csv');
+      const stats = exportDomainStatistics(domainsForOperations, 'domain_statistics.csv');
       message.success(`Statistics exported! Total: ${stats.total} domains`);
     } catch (error) {
       message.error('Failed to export statistics: ' + error.message);
@@ -102,7 +128,7 @@ const DomainList = ({
   };
 
   const handleCopySelected = async () => {
-    const selectedDomainNames = domains
+    const selectedDomainNames = domainsForOperations
       .filter(domain => selectedDomains.includes(domain.id))
       .map(domain => domain.domainName)
       .join('\n');
@@ -120,11 +146,10 @@ const DomainList = ({
   };
 
   const handleRequestSelected = () => {
-    const selectedDomainObjects = domains.filter(domain =>
+    const selectedDomainObjects = domainsForOperations.filter(domain =>
       selectedDomains.includes(domain.id)
     );
 
-    // Check for unavailable or already requested/bought domains
     const unavailableDomains = selectedDomainObjects.filter(domain => !domain.status);
     const requestedOrBoughtDomains = selectedDomainObjects.filter(domain => {
       const status = ticketStatuses[domain.domainName];
@@ -170,15 +195,22 @@ const DomainList = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const availableDomainsCount = domains.filter(domain => domain.status).length;
+  const availableDomainsCount = domainsForOperations.filter(domain => domain.status).length;
   const allAvailableSelected = availableDomainsCount > 0 &&
     selectedDomains.length === availableDomainsCount &&
     selectedDomains.every(id => {
-      const domain = domains.find(d => d.id === id);
+      const domain = domainsForOperations.find(d => d.id === id);
       return domain && domain.status;
     });
 
-  if (domains.length === 0) {
+  // Check if all available domains on current page are selected
+  const currentPageAvailableIds = domains
+    .filter(domain => domain.status)
+    .map(domain => domain.id);
+  const allCurrentPageSelected = currentPageAvailableIds.length > 0 &&
+    currentPageAvailableIds.every(id => selectedDomains.includes(id));
+
+  if (totalDomains === 0 && domains.length === 0) {
     return (
       <div style={{ padding: '40px 16px', textAlign: 'center' }}>
         <Empty
@@ -193,55 +225,81 @@ const DomainList = ({
     <div>
       {/* Action Bar */}
       <div style={{
-        padding: '8px 16px',
+        padding: '8px 12px',
         backgroundColor: '#141414',
         borderBottom: '1px solid #303030',
         position: 'sticky',
         top: 0,
         zIndex: 100
       }}>
-        <div style={{ marginBottom: 8 }}>
-          <Space wrap>
-            <Button
-              size="small"
-              type={allAvailableSelected ? 'default' : 'primary'}
-              onClick={() => handleSelectAll(!allAvailableSelected)}
-            >
-              {allAvailableSelected ? 'Unselect All' : 'Select All Available'}
-            </Button>
-            <Button
-              size="small"
-              icon={<CopyOutlined />}
-              onClick={handleCopySelected}
-              disabled={selectedDomains.length === 0}
-            >
-              Copy Selected ({selectedDomains.length})
-            </Button>
-            <Button
-              size="small"
-              icon={<DownloadOutlined />}
-              onClick={handleExportCSV}
-            >
-              Export CSV
-            </Button>
-          </Space>
+        {/* Selection Buttons Row */}
+        <div style={{ 
+          display: 'flex', 
+          flexWrap: 'wrap',
+          gap: 6,
+          marginBottom: 8 
+        }}>
+          <Button
+            size="small"
+            type={allCurrentPageSelected ? 'default' : 'primary'}
+            onClick={() => handleSelectCurrentPage(!allCurrentPageSelected)}
+            style={{ fontSize: '12px', padding: '0 8px' }}
+          >
+            {allCurrentPageSelected ? 'Unselect Page' : 'Select Page'}
+          </Button>
+          <Button
+            size="small"
+            type={allAvailableSelected ? 'default' : 'dashed'}
+            onClick={() => handleSelectAll(!allAvailableSelected)}
+            style={{ fontSize: '12px', padding: '0 8px' }}
+          >
+            {allAvailableSelected ? 'Unselect All' : `All (${availableDomainsCount})`}
+          </Button>
+          <Button
+            size="small"
+            icon={<CopyOutlined />}
+            onClick={handleCopySelected}
+            disabled={selectedDomains.length === 0}
+            style={{ fontSize: '12px', padding: '0 8px' }}
+          >
+            Copy ({selectedDomains.length})
+          </Button>
+          <Button
+            size="small"
+            icon={<DownloadOutlined />}
+            onClick={handleExportCSV}
+            style={{ fontSize: '12px', padding: '0 8px' }}
+          >
+            CSV
+          </Button>
         </div>
 
+        {/* Request Button */}
         {selectedDomains.length > 0 && (
           <Button
             type="primary"
             icon={<ShoppingCartOutlined />}
             onClick={handleRequestSelected}
             block
-            style={{ marginTop: 4 }}
+            size="middle"
           >
-            Request Selected Domains ({selectedDomains.length})
+            Request Selected ({selectedDomains.length})
           </Button>
         )}
       </div>
 
+      {/* Top Pagination Bar */}
+      <PaginationBar
+        currentPage={currentPage}
+        pageSize={pageSize}
+        total={totalDomains}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        position="top"
+      />
+
       {/* Domain Cards */}
-      <div style={{ paddingBottom: 80 }}>
+      <div style={{ paddingBottom: 8 }}>
         {domains.map(domain => (
           <DomainCard
             key={domain.id}
@@ -255,12 +313,24 @@ const DomainList = ({
         ))}
       </div>
 
-      {/* Floating Action Buttons */}
+      {/* Bottom Pagination Bar */}
+      <div style={{ paddingBottom: 80 }}>
+        <PaginationBar
+          currentPage={currentPage}
+          pageSize={pageSize}
+          total={totalDomains}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+          position="bottom"
+        />
+      </div>
+
+      {/* Floating Scroll to Top Button */}
       {showScrollTop && (
         <FloatButton
           icon={<UpOutlined />}
           onClick={scrollToTop}
-          style={{ right: 16, bottom: 80 }}
+          style={{ right: 16, bottom: 24 }}
         />
       )}
     </div>

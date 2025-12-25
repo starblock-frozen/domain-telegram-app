@@ -47,6 +47,10 @@ function App() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [domainsToRequest, setDomainsToRequest] = useState([]);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
   // Warning Modal State
   const [warningModalVisible, setWarningModalVisible] = useState(false);
   const [warningModalData, setWarningModalData] = useState({ 
@@ -63,8 +67,8 @@ function App() {
     daRange: [0, 100],
     paRange: [0, 100],
     ssRange: [0, 100],
-    domainType: 'good', // 'good' or 'all'
-    sortBy: 'newest' // 'newest', 'oldest', 'da_high', 'da_low', 'price_high', 'price_low'
+    domainType: 'good',
+    sortBy: 'newest'
   });
 
   // Fetch domains on component mount
@@ -84,9 +88,25 @@ function App() {
     }
   }, [userId, domains]);
 
+  // Reset page when filters change (except sortBy to maintain position when sorting)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    filters.domainName,
+    filters.countries,
+    filters.categories,
+    filters.statusFilter,
+    filters.daRange,
+    filters.paRange,
+    filters.ssRange,
+    filters.domainType,
+    pageSize
+  ]);
+
   const fetchDomains = async () => {
     try {
       setLoading(true);
+      setCurrentPage(1);
       let response;
       
       if (filters.domainType === 'good') {
@@ -97,7 +117,6 @@ function App() {
       
       const domainsData = response.data.data || [];
       
-      // Transform price for display (if price is 1, show as 10)
       const transformedDomains = domainsData.map(domain => ({
         ...domain,
         displayPrice: domain.price === 1 ? 10 : domain.price
@@ -170,46 +189,38 @@ function App() {
   const applyFilters = () => {
     let filtered = [...domains];
 
-    // Domain name filter
     if (filters.domainName) {
       filtered = filtered.filter(domain =>
         domain.domainName.toLowerCase().includes(filters.domainName.toLowerCase())
       );
     }
 
-    // Countries filter
     if (filters.countries && filters.countries.length > 0) {
       filtered = filtered.filter(domain => filters.countries.includes(domain.country));
     }
 
-    // Categories filter
     if (filters.categories && filters.categories.length > 0) {
       filtered = filtered.filter(domain => filters.categories.includes(domain.category));
     }
 
-    // Status filter
     if (filters.statusFilter === 'available') {
       filtered = filtered.filter(domain => domain.status === true);
     } else if (filters.statusFilter === 'sold') {
       filtered = filtered.filter(domain => domain.status === false);
     }
 
-    // DA range filter
     filtered = filtered.filter(domain =>
       (domain.da || 0) >= filters.daRange[0] && (domain.da || 0) <= filters.daRange[1]
     );
 
-    // PA range filter
     filtered = filtered.filter(domain =>
       (domain.pa || 0) >= filters.paRange[0] && (domain.pa || 0) <= filters.paRange[1]
     );
 
-    // SS range filter
     filtered = filtered.filter(domain =>
       (domain.ss || 0) >= filters.ssRange[0] && (domain.ss || 0) <= filters.ssRange[1]
     );
 
-    // Apply sorting
     filtered = sortDomains(filtered, filters.sortBy);
 
     setFilteredDomains(filtered);
@@ -228,7 +239,7 @@ function App() {
       daRange: [0, 100],
       paRange: [0, 100],
       ssRange: [0, 100],
-      domainType: filters.domainType, // Keep domain type
+      domainType: filters.domainType,
       sortBy: 'newest'
     });
   };
@@ -261,6 +272,27 @@ function App() {
     }));
   };
 
+  // Pagination handlers
+  const handlePageChange = (page, newPageSize) => {
+    setCurrentPage(page);
+    if (newPageSize && newPageSize !== pageSize) {
+      setPageSize(newPageSize);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePageSizeChange = (newPageSize) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1);
+  };
+
+  // Calculate paginated domains
+  const getPaginatedDomains = () => {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    return filteredDomains.slice(startIndex, endIndex);
+  };
+
   const handleRequestBuy = (domainsToRequest) => {
     if (!userId) {
       message.error('Telegram user information not available');
@@ -272,9 +304,6 @@ function App() {
 
   const checkDomainAvailability = async (domainNames) => {
     try {
-      console.log('Checking availability for domains:', domainNames);
-      
-      // Fetch latest domain data to check availability
       let response;
       if (filters.domainType === 'good') {
         response = await domainAPI.getPublicDomains();
@@ -282,10 +311,7 @@ function App() {
         response = await domainAPI.getAllDomains();
       }
       
-      console.log('API Response:', response);
-      
       const latestDomains = response.data?.data || response.data || [];
-      console.log('Latest domains from API:', latestDomains);
       
       const results = {
         available: [],
@@ -294,7 +320,6 @@ function App() {
 
       domainNames.forEach(domainName => {
         const domain = latestDomains.find(d => d.domainName === domainName);
-        console.log(`Domain ${domainName}:`, domain);
         
         if (domain) {
           if (domain.status === true) {
@@ -303,16 +328,13 @@ function App() {
             results.sold.push(domainName);
           }
         } else {
-          // If domain not found in latest data, consider it sold
           results.sold.push(domainName);
         }
       });
 
-      console.log('Availability check results:', results);
       return results;
     } catch (error) {
       console.error('Error checking domain availability:', error);
-      // If API fails, assume all domains are still available to avoid blocking the user
       return {
         available: domainNames,
         sold: []
@@ -321,8 +343,6 @@ function App() {
   };
 
   const updateDomainStatus = (domainNames, status) => {
-    console.log('Updating domain status:', domainNames, 'to', status);
-    
     setDomains(prevDomains => 
       prevDomains.map(domain => 
         domainNames.includes(domain.domainName) 
@@ -331,7 +351,6 @@ function App() {
       )
     );
 
-    // Remove sold domains from selected domains
     if (!status) {
       const soldDomainIds = domains
         .filter(domain => domainNames.includes(domain.domainName))
@@ -344,24 +363,17 @@ function App() {
   };
 
   const showSoldDomainsWarning = (soldDomains, availableDomains, callback) => {
-    console.log('Showing sold domains warning:', { soldDomains, availableDomains });
-    
     setWarningModalData({ soldDomains, availableDomains, callback });
     setWarningModalVisible(true);
   };
 
   const handleWarningModalOk = () => {
-    console.log('Warning modal OK clicked');
-    
-    // Update domain statuses
     updateDomainStatus(warningModalData.soldDomains, false);
     
-    // Execute callback if provided
     if (warningModalData.callback) {
       warningModalData.callback();
     }
     
-    // Close modal
     setWarningModalVisible(false);
     setWarningModalData({ soldDomains: [], availableDomains: [], callback: null });
   };
@@ -377,46 +389,31 @@ function App() {
 
     try {
       setRequestLoading(true);
-      console.log('Starting request confirmation for domains:', domainsToRequest);
       
       const domainNames = domainsToRequest.map(domain => domain.domainName);
-      console.log('Domain names to check:', domainNames);
-      
-      // Check domain availability
       const availabilityCheck = await checkDomainAvailability(domainNames);
-      console.log('Availability check completed:', availabilityCheck);
       
       if (availabilityCheck.sold.length > 0) {
-        console.log('Found sold domains, showing warning modal');
-        
-        // Show warning modal for sold domains
         showSoldDomainsWarning(
           availabilityCheck.sold, 
           availabilityCheck.available,
           () => {
-            console.log('Warning modal callback executed');
-            // Continue with available domains if any
             if (availabilityCheck.available.length > 0) {
               const availableDomainsToRequest = domainsToRequest.filter(domain => 
                 availabilityCheck.available.includes(domain.domainName)
               );
-              console.log('Proceeding with available domains:', availableDomainsToRequest);
               proceedWithRequest(availableDomainsToRequest);
             } else {
-              console.log('No available domains, closing modal');
               setShowRequestModal(false);
               setDomainsToRequest([]);
             }
           }
         );
         
-        // Important: Don't return here, let the modal show
         setRequestLoading(false);
         return;
       }
       
-      console.log('All domains available, proceeding with request');
-      // All domains are available, proceed with request
       await proceedWithRequest(domainsToRequest);
       
     } catch (error) {
@@ -428,8 +425,6 @@ function App() {
 
   const proceedWithRequest = async (availableDomains) => {
     try {
-      console.log('Proceeding with request for domains:', availableDomains);
-      
       const ticketData = {
         customer_id: username || userId.toString(),
         request_domains: availableDomains.map(domain => domain.domainName),
@@ -437,7 +432,6 @@ function App() {
         status: 'New'
       };
 
-      console.log('Creating ticket with data:', ticketData);
       await ticketAPI.createTicket(ticketData);
       
       message.success('Purchase request sent successfully!');
@@ -579,7 +573,7 @@ function App() {
           </div>
         </div>
 
-        {/* Domain Type Selection with Glowing Effect */}
+        {/* Domain Type Selection */}
         <div className="domain-type-selection" style={{ 
           padding: '12px 16px', 
           backgroundColor: '#141414', 
@@ -676,14 +670,20 @@ function App() {
           onToggle={() => setShowFilters(!showFilters)}
         />
 
-        {/* Domain List */}
+        {/* Domain List with Pagination */}
         <DomainList
-          domains={filteredDomains}
+          domains={getPaginatedDomains()}
+          allDomains={filteredDomains}
           selectedDomains={selectedDomains}
           onSelectionChange={handleSelectionChange}
           ticketStatuses={ticketStatuses}
           onRequestBuy={handleRequestBuy}
           onDomainCardClick={handleDomainCardClick}
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalDomains={filteredDomains.length}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
         />
 
         {/* Payment Modal */}
