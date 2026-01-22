@@ -266,10 +266,8 @@ html, body, #root {
 
 /* Status Filter Section */
 .status-filter-section {
-  padding: 16px 10px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-primary);
-  margin-bottom: 8px;
+  padding: 10px 5px;
+  background: var(--bg-secondary);  
 }
 
 .section-label {
@@ -522,12 +520,12 @@ html, body, #root {
 }
 
 .action-btn {
-  font-size: 13px !important;
-  padding: 0 12px !important;
+  font-size: 11px !important;
+  padding: 0 13px !important;
   border-radius: 0 !important;
   transition: var(--transition-fast) !important;
   font-weight: 600 !important;
-  height: 36px !important;
+  height: 32px !important;
 }
 
 .action-btn:hover {
