@@ -8,15 +8,15 @@ import {
   Space,
   Radio,
   Input,
-  Modal,
-  Select
+  Modal
 } from 'antd';
 import { 
   ReloadOutlined, 
   SearchOutlined,
   WalletOutlined,
   ExclamationCircleOutlined,
-  SortAscendingOutlined
+  DownOutlined,
+  UpOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -27,12 +27,10 @@ import PaymentModal from './components/PaymentModal';
 import LoadingSpinner from './components/LoadingSpinner';
 import useTelegram from './hooks/useTelegram';
 import { domainAPI, ticketAPI } from './services/api';
-import { isToday } from './utils/dateUtils';
 
 import './App.css';
 
 const { Title, Text } = Typography;
-const { Option } = Select;
 
 function App() {
   const { user, username, userId } = useTelegram();
@@ -47,11 +45,9 @@ function App() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [domainsToRequest, setDomainsToRequest] = useState([]);
 
-  // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
 
-  // Warning Modal State
   const [warningModalVisible, setWarningModalVisible] = useState(false);
   const [warningModalData, setWarningModalData] = useState({ 
     soldDomains: [], 
@@ -63,43 +59,41 @@ function App() {
     domainName: '',
     countries: [],
     categories: [],
+    domainTypes: [],
     statusFilter: 'all',
     daRange: [0, 100],
     paRange: [0, 100],
     ssRange: [0, 100],
-    domainType: 'good',
+    priceRange: [0, 1000],
     sortBy: 'newest'
   });
 
-  // Fetch domains on component mount
   useEffect(() => {
     fetchDomains();
-  }, [filters.domainType]);
+  }, []);
 
-  // Apply filters when domains or filters change
   useEffect(() => {
     applyFilters();
   }, [domains, filters]);
 
-  // Fetch ticket statuses when user is available and domains are loaded
   useEffect(() => {
     if (userId && domains.length > 0) {
       fetchTicketStatuses();
     }
   }, [userId, domains]);
 
-  // Reset page when filters change (except sortBy to maintain position when sorting)
   useEffect(() => {
     setCurrentPage(1);
   }, [
     filters.domainName,
     filters.countries,
     filters.categories,
+    filters.domainTypes,
     filters.statusFilter,
     filters.daRange,
     filters.paRange,
     filters.ssRange,
-    filters.domainType,
+    filters.priceRange,
     pageSize
   ]);
 
@@ -107,13 +101,7 @@ function App() {
     try {
       setLoading(true);
       setCurrentPage(1);
-      let response;
-      
-      if (filters.domainType === 'good') {
-        response = await domainAPI.getPublicDomains();
-      } else {
-        response = await domainAPI.getAllDomains();
-      }
+      const response = await domainAPI.getPublicDomains();
       
       const domainsData = response.data.data || [];
       
@@ -203,6 +191,13 @@ function App() {
       filtered = filtered.filter(domain => filters.categories.includes(domain.category));
     }
 
+    if (filters.domainTypes && filters.domainTypes.length > 0) {
+      filtered = filtered.filter(domain => {
+        const domainType = domain.type || 'Shell';
+        return filters.domainTypes.includes(domainType);
+      });
+    }
+
     if (filters.statusFilter === 'available') {
       filtered = filtered.filter(domain => domain.status === true);
     } else if (filters.statusFilter === 'sold') {
@@ -221,6 +216,11 @@ function App() {
       (domain.ss || 0) >= filters.ssRange[0] && (domain.ss || 0) <= filters.ssRange[1]
     );
 
+    filtered = filtered.filter(domain =>
+      (domain.displayPrice || 0) >= filters.priceRange[0] && 
+      (domain.displayPrice || 0) <= filters.priceRange[1]
+    );
+
     filtered = sortDomains(filtered, filters.sortBy);
 
     setFilteredDomains(filtered);
@@ -232,14 +232,15 @@ function App() {
 
   const clearFilters = () => {
     setFilters({
-      domainName: '',
+      domainName: filters.domainName,
       countries: [],
       categories: [],
+      domainTypes: [],
       statusFilter: 'all',
       daRange: [0, 100],
       paRange: [0, 100],
       ssRange: [0, 100],
-      domainType: filters.domainType,
+      priceRange: [0, 1000],
       sortBy: 'newest'
     });
   };
@@ -258,21 +259,6 @@ function App() {
     }));
   };
 
-  const handleDomainTypeChange = (e) => {
-    setFilters(prev => ({
-      ...prev,
-      domainType: e.target.value
-    }));
-  };
-
-  const handleSortChange = (value) => {
-    setFilters(prev => ({
-      ...prev,
-      sortBy: value
-    }));
-  };
-
-  // Pagination handlers
   const handlePageChange = (page, newPageSize) => {
     setCurrentPage(page);
     if (newPageSize && newPageSize !== pageSize) {
@@ -286,7 +272,6 @@ function App() {
     setCurrentPage(1);
   };
 
-  // Calculate paginated domains
   const getPaginatedDomains = () => {
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
@@ -304,13 +289,7 @@ function App() {
 
   const checkDomainAvailability = async (domainNames) => {
     try {
-      let response;
-      if (filters.domainType === 'good') {
-        response = await domainAPI.getPublicDomains();
-      } else {
-        response = await domainAPI.getAllDomains();
-      }
-      
+      const response = await domainAPI.getPublicDomains();
       const latestDomains = response.data?.data || response.data || [];
       
       const results = {
@@ -481,13 +460,14 @@ function App() {
         theme={{
           algorithm: theme.darkAlgorithm,
           token: {
-            colorPrimary: '#1890ff',
-            colorBgContainer: '#141414',
-            colorBgElevated: '#1f1f1f',
-            colorBorder: '#303030',
-            colorText: 'rgba(255, 255, 255, 0.85)',
-            colorTextSecondary: 'rgba(255, 255, 255, 0.65)',
+            colorPrimary: '#8b5cf6',
+            colorBgContainer: '#0f0f0f',
+            colorBgElevated: '#1a1a1a',
+            colorBorder: '#2a2a2a',
+            colorText: '#e5e5e5',
+            colorTextSecondary: '#a3a3a3',
             colorBgBase: '#000000',
+            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           },
         }}
       >
@@ -503,188 +483,137 @@ function App() {
       theme={{
         algorithm: theme.darkAlgorithm,
         token: {
-          colorPrimary: '#1890ff',
-          colorBgContainer: '#141414',
-          colorBgElevated: '#1f1f1f',
-          colorBorder: '#303030',
-          colorText: 'rgba(255, 255, 255, 0.85)',
-          colorTextSecondary: 'rgba(255, 255, 255, 0.65)',
+          colorPrimary: '#8b5cf6',
+          colorBgContainer: '#0f0f0f',
+          colorBgElevated: '#1a1a1a',
+          colorBorder: '#2a2a2a',
+          colorText: '#e5e5e5',
+          colorTextSecondary: '#a3a3a3',
           colorBgBase: '#000000',
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         },
       }}
     >
       <div className="App">
-        {/* Header */}
-        <div style={{ 
-          padding: '12px 16px', 
-          backgroundColor: '#001529', 
-          borderBottom: '1px solid #303030',
-          position: 'sticky',
-          top: 0,
-          zIndex: 200
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <Title level={4} style={{ margin: 0, color: '#1890ff' }}>
-                WebShell Store
-              </Title>
-              {user && (
-                <Text type="secondary" style={{ fontSize: '12px' }}>
-                  Welcome, {user.first_name || username || 'User'}
-                </Text>
-              )}
+        {/* Fixed Header with Filter Button */}
+        <div className="fixed-header">
+          {/* Top Bar */}
+          <div className="header-top-bar">
+            <div className="header-content">
+              <div className="header-left">
+                <div className="logo-container">
+                  <div className="logo-icon">🛡️</div>
+                  <div className="logo-text">
+                    <Title level={4} className="app-title">
+                      PHILLIP STORE
+                    </Title>
+                    {user && (
+                      <Text className="welcome-text">
+                        Welcome, {user.first_name || username || 'User'}
+                      </Text>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <Space className="header-actions" size="small">
+                <Button
+                  type="text"
+                  className="filter-toggle-btn-header"
+                  onClick={() => setShowFilters(!showFilters)}
+                  icon={showFilters ? <UpOutlined /> : <DownOutlined />}
+                >
+                  {showFilters ? 'Close' : 'Filter'}
+                </Button>
+                <Button
+                  type="text"
+                  icon={<WalletOutlined />}
+                  onClick={() => setShowPaymentModal(true)}
+                  className="header-icon-btn"
+                  title="Payment Info"
+                />
+                <Button
+                  type="text"
+                  icon={<ReloadOutlined />}
+                  onClick={handleRefresh}
+                  className="header-icon-btn"
+                  title="Refresh"
+                />
+              </Space>
             </div>
-            <Space>
-              <Button
-                type="text"
-                icon={<WalletOutlined />}
-                onClick={() => setShowPaymentModal(true)}
-                size="small"
-                style={{ color: 'rgba(255, 255, 255, 0.65)' }}
-                title="Payment Info"
+            
+            {/* Domain Search */}
+            <div className="search-container">
+              <Input
+                placeholder="Search domain name..."
+                value={filters.domainName}
+                onChange={handleDomainNameChange}
+                prefix={<SearchOutlined className="search-icon" />}
+                allowClear
+                className="search-input"
+                size="large"
               />
-              <Button
-                type="text"
-                icon={<ReloadOutlined />}
-                onClick={handleRefresh}
-                size="small"
-                style={{ color: 'rgba(255, 255, 255, 0.65)' }}
-                title="Refresh"
-              />
-            </Space>
-          </div>
-          
-          {/* Domain Search */}
-          <div style={{ marginTop: 12 }}>
-            <Input
-              placeholder="Search domain name..."
-              value={filters.domainName}
-              onChange={handleDomainNameChange}
-              prefix={<SearchOutlined style={{ color: 'rgba(255, 255, 255, 0.45)' }} />}
-              allowClear
-              style={{ marginBottom: 8 }}
-            />
-          </div>
-          
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.45)' }}>
-              {filteredDomains.length} domains found
-            </Text>
-          </div>
-        </div>
-
-        {/* Domain Type Selection */}
-        <div className="domain-type-selection" style={{ 
-          padding: '12px 16px', 
-          backgroundColor: '#141414', 
-          borderBottom: '1px solid #303030',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <div style={{ marginBottom: 8 }}>
-            <Text strong style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.85)' }}>
-              Domain Selection
-            </Text>
-          </div>
-          <Radio.Group
-            value={filters.domainType}
-            onChange={handleDomainTypeChange}
-            buttonStyle="solid"
-            size="small"
-            style={{ width: '100%', marginBottom: 8 }}
-            className="glowing-radio-group"
-          >
-            <Radio.Button value="good" className="glowing-radio-button">
-              Show Good Domains
-            </Radio.Button>
-            <Radio.Button value="all" className="glowing-radio-button">
-              Show All Domains
-            </Radio.Button>
-          </Radio.Group>
-          
-          {/* Flowing Text */}
-          <div className="flowing-text-container">
-            <div className="flowing-text">
-              💡 If you want to buy bulk domains, please click the "Show All Domains" button for complete inventory access
             </div>
-          </div>
-        </div>
-
-        {/* Sort and Status Filter */}
-        <div style={{ 
-          padding: '8px 16px', 
-          backgroundColor: '#141414', 
-          borderBottom: '1px solid #303030'
-        }}>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-            <div style={{ flex: 1 }}>
-              <Text strong style={{ fontSize: '12px', display: 'block', marginBottom: 4 }}>
-                Sort By
+            
+            <div className="domains-count">
+              <Text className="count-text">
+                <span className="count-number">{filteredDomains.length}</span> domains found
               </Text>
-              <Select
-                value={filters.sortBy}
-                onChange={handleSortChange}
-                size="small"
-                style={{ width: '100%' }}
-                suffixIcon={<SortAscendingOutlined />}
-              >
-                <Option value="newest">Newest to Oldest</Option>
-                <Option value="oldest">Oldest to Newest</Option>
-                <Option value="da_high">DA (High to Low)</Option>
-                <Option value="da_low">DA (Low to High)</Option>
-                <Option value="price_high">Price (High to Low)</Option>
-                <Option value="price_low">Price (Low to High)</Option>
-              </Select>
             </div>
           </div>
-          
-          <div style={{ marginBottom: 4 }}>
-            <Text strong style={{ fontSize: '12px' }}>Domain Status</Text>
-          </div>
-          <Radio.Group
-            value={filters.statusFilter}
-            onChange={handleStatusFilterChange}
-            buttonStyle="solid"
-            size="small"
-            style={{ width: '100%' }}
-          >
-            <Radio.Button value="all" style={{ flex: 1, textAlign: 'center' }}>
-              All ({domains.length})
-            </Radio.Button>
-            <Radio.Button value="available" style={{ flex: 1, textAlign: 'center' }}>
-              Available ({domains.filter(d => d.status).length})
-            </Radio.Button>
-            <Radio.Button value="sold" style={{ flex: 1, textAlign: 'center' }}>
-              Sold ({domains.filter(d => !d.status).length})
-            </Radio.Button>
-          </Radio.Group>
         </div>
 
-        {/* Filter Panel */}
+        {/* Filter Panel Overlay */}
         <FilterPanel
           visible={showFilters}
           filters={filters}
           onFilterChange={handleFilterChange}
           onClearFilters={clearFilters}
           domains={domains}
-          onToggle={() => setShowFilters(!showFilters)}
+          onClose={() => setShowFilters(false)}
         />
 
-        {/* Domain List with Pagination */}
-        <DomainList
-          domains={getPaginatedDomains()}
-          allDomains={filteredDomains}
-          selectedDomains={selectedDomains}
-          onSelectionChange={handleSelectionChange}
-          ticketStatuses={ticketStatuses}
-          onRequestBuy={handleRequestBuy}
-          onDomainCardClick={handleDomainCardClick}
-          currentPage={currentPage}
-          pageSize={pageSize}
-          totalDomains={filteredDomains.length}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-        />
+        {/* Scrollable Content */}
+        <div className="scrollable-content">
+          {/* Status Filter */}
+          <div className="status-filter-section">
+            <Radio.Group
+              value={filters.statusFilter}
+              onChange={handleStatusFilterChange}
+              buttonStyle="solid"
+              size="large"
+              style={{ width: '100%', marginTop: 14, textAlign: "center" }}
+              className="status-radio-group"
+            >
+              <Radio.Button value="all">
+                All ({domains.length})
+              </Radio.Button>
+              <Radio.Button value="available">
+                Active ({domains.filter(d => d.status).length})
+              </Radio.Button>
+              <Radio.Button value="sold">
+                Sold ({domains.filter(d => !d.status).length})
+              </Radio.Button>
+            </Radio.Group>
+          </div>
+
+          {/* Domain List with Pagination */}
+          <DomainList
+            domains={getPaginatedDomains()}
+            allDomains={filteredDomains}
+            selectedDomains={selectedDomains}
+            onSelectionChange={handleSelectionChange}
+            ticketStatuses={ticketStatuses}
+            onRequestBuy={handleRequestBuy}
+            onDomainCardClick={handleDomainCardClick}
+            currentPage={currentPage}
+            pageSize={pageSize}
+            totalDomains={filteredDomains.length}
+            onPageChange={handlePageChange}
+            onPageSizeChange={handlePageSizeChange}
+            sortBy={filters.sortBy}
+            onSortChange={(value) => setFilters(prev => ({ ...prev, sortBy: value }))}
+          />
+        </div>
 
         {/* Payment Modal */}
         <PaymentModal
