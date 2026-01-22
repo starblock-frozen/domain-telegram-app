@@ -131,7 +131,7 @@ html, body, #root {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0px;
 }
 
 /* Filter Toggle Button in Header */
@@ -266,7 +266,7 @@ html, body, #root {
 
 /* Status Filter Section */
 .status-filter-section {
-  padding: 16px 20px;
+  padding: 16px 10px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-primary);
   margin-bottom: 8px;
@@ -516,7 +516,7 @@ html, body, #root {
 
 /* Domain Action Bar */
 .domain-action-bar {
-  padding: 12px 16px;
+  padding: 12px 10px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-primary);
 }
