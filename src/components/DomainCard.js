@@ -80,7 +80,7 @@ const DomainCard = ({
     switch (ticketStatus) {
       case 'Sold':
         return {
-          text: 'Bought',
+          text: '',
           type: 'primary',
           icon: <CheckCircleOutlined />,
           disabled: true,
@@ -89,7 +89,7 @@ const DomainCard = ({
       case 'New':
       case 'Read':
         return {
-          text: 'Requested',
+          text: '',
           type: 'default',
           icon: <ClockCircleOutlined />,
           disabled: true,
@@ -97,7 +97,7 @@ const DomainCard = ({
         };
       default:
         return {
-          text: 'Request to Buy',
+          text: '',
           type: 'primary',
           icon: <ShoppingCartOutlined />,
           disabled: false,

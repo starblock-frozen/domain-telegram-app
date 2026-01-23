@@ -5,23 +5,17 @@ import {
   Typography,
   message,
   Empty,
-  FloatButton,
-  Modal
+  FloatButton
 } from 'antd';
 import {
   DownloadOutlined,
   CopyOutlined,
-  ShoppingCartOutlined,
-  UpOutlined,
-  ExclamationCircleOutlined
+  UpOutlined
 } from '@ant-design/icons';
 import DomainCard from './DomainCard';
 import PaginationBar from './PaginationBar';
 import {
-  exportDomainsToCSV,
-  exportDomainsToDetailedCSV,
-  exportSelectedDomainsToCSV,
-  exportDomainStatistics
+  exportDomainsToCSV
 } from '../utils/csvExport';
 
 const { Text } = Typography;
@@ -113,52 +107,6 @@ const DomainList = ({
     }
   };
 
-  const handleRequestSelected = () => {
-    const selectedDomainObjects = domainsForOperations.filter(domain =>
-      selectedDomains.includes(domain.id)
-    );
-
-    const unavailableDomains = selectedDomainObjects.filter(domain => !domain.status);
-    const requestedOrBoughtDomains = selectedDomainObjects.filter(domain => {
-      const status = ticketStatuses[domain.domainName];
-      return status === 'New' || status === 'Read' || status === 'Sold';
-    });
-
-    const problematicDomains = [...unavailableDomains, ...requestedOrBoughtDomains];
-
-    if (problematicDomains.length > 0) {
-      const soldDomains = unavailableDomains.map(d => d.domainName);
-      const requestedDomains = requestedOrBoughtDomains.map(d => d.domainName);
-
-      let content = '';
-      if (soldDomains.length > 0) {
-        content += `Sold domains: ${soldDomains.join(', ')}\n`;
-      }
-      if (requestedDomains.length > 0) {
-        content += `Already requested/bought domains: ${requestedDomains.join(', ')}`;
-      }
-
-      Modal.warning({
-        title: 'Cannot Request Selected Domains',
-        content: content,
-        okText: 'OK',
-        centered: true,
-        icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
-      });
-      return;
-    }
-
-    const availableSelectedDomains = selectedDomainObjects.filter(domain =>
-      domain.status && !ticketStatuses[domain.domainName]
-    );
-
-    if (availableSelectedDomains.length > 0) {
-      onRequestBuy(availableSelectedDomains);
-    } else {
-      message.warning('No available domains selected');
-    }
-  };
-
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -232,19 +180,6 @@ const DomainList = ({
             CSV
           </Button>
         </div>
-
-        {selectedDomains.length > 0 && (
-          <Button
-            type="primary"
-            icon={<ShoppingCartOutlined />}
-            onClick={handleRequestSelected}
-            block
-            size="middle"
-            className="request-btn"
-          >
-            Request Selected ({selectedDomains.length})
-          </Button>
-        )}
       </div>
 
       {/* Top Pagination Bar */}
@@ -273,7 +208,7 @@ const DomainList = ({
       </div>
 
       {/* Bottom Pagination Bar */}
-      <div style={{ paddingBottom: 80 }}>
+      <div style={{ paddingBottom: 100 }}>
         <PaginationBar
           currentPage={currentPage}
           pageSize={pageSize}
@@ -289,7 +224,7 @@ const DomainList = ({
         <FloatButton
           icon={<UpOutlined />}
           onClick={scrollToTop}
-          style={{ right: 16, bottom: 24 }}
+          style={{ right: 16, bottom: 160 }}
         />
       )}
     </div>
