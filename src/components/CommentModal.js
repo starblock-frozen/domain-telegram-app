@@ -89,6 +89,22 @@ const CommentModal = ({ visible, onCancel, onSubmit, username, loading }) => {
         }}>
           We can help you achieve your goals in this blackhat world. We are open to any kind of contract, so please send a message to us!
         </Paragraph>
+        <br />
+        <Paragraph style={{ 
+          color: 'rgba(255, 255, 255, 0.85)',
+          marginBottom: 0,
+          lineHeight: '1.6'
+        }}>
+          And anyone can send us feedback or suggestion of the bot implementation which is good for our work.
+        </Paragraph>
+        <br />
+        <Paragraph style={{ 
+          color: 'rgba(255, 255, 255, 0.85)',
+          marginBottom: 0,
+          lineHeight: '1.6'
+        }}>
+          Thanks!
+        </Paragraph>
       </div>
 
       <div>
