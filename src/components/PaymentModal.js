@@ -10,11 +10,7 @@ const PaymentModal = ({ visible, onCancel }) => {
 
   const walletAddresses = {
     BTC: 'bc1qfyapmuph3a43qpysdncre5uvpsjn9s6n0xj0yh',
-    'TRC20 USDT': 'TFi6Wvd74wPPtcgWnhFRVP7vtatnKCjmm4',
-    'ERC20 USDT': '0x74af87a1372d9e510a315e94d4614295672c66d5',
-    'BEP20 USDT': '0xd3e99b545527b546118dad2d1873da8f969ab04b',
-    LTC: 'ltc1qw45xp50rh8efh38eu09dxvwgguwqgj6daf906v',
-    'SOL USDT(USDC)': '7X856U4EjMxxfKoEWtFNd9Ep5qXScLx5U64GStyHCaqX'
+    'TRC20 USDT': 'TFi6Wvd74wPPtcgWnhFRVP7vtatnKCjmm4'
   };
 
   const copyToClipboard = async (text, key) => {
@@ -124,7 +120,7 @@ const PaymentModal = ({ visible, onCancel }) => {
             border: '2px solid #1890ff'
           }}>
             <a 
-              href="https://t.me/ph1l1pj0hn" 
+              href="https://t.me/bitterSweet4me" 
               target="_blank" 
               rel="noopener noreferrer"
               style={{ 
@@ -135,7 +131,7 @@ const PaymentModal = ({ visible, onCancel }) => {
                 display: 'block'
               }}
             >
-              @ph1l1pj0hn
+              @bitterSweet4me
             </a>
             <Text style={{ 
               fontSize: '12px', 
