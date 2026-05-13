@@ -10,7 +10,7 @@ const PaymentModal = ({ visible, onCancel }) => {
 
   const walletAddresses = {
     BTC: 'bc1q9tehgd62qd3vyrk3a2kgk6lu5p9uh88lnxqe2u',
-    'TRC20 USDT': 'TFi6Wvd74wPPtcgWnhFRVP7vtatnKCjmm4'
+    'TRC20 USDT': 'TYerviHds7CVRTPAaxh5sWxr6D7hAB9EjQ'
   };
 
   const copyToClipboard = async (text, key) => {
