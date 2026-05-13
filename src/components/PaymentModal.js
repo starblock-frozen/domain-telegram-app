@@ -9,7 +9,7 @@ const PaymentModal = ({ visible, onCancel }) => {
   const [copiedStates, setCopiedStates] = useState({});
 
   const walletAddresses = {
-    BTC: 'bc1q9tehgd62qd3vyrk3a2kgk6lu5p9uh88lnxqe2u',
+    BTC: 'bc1qlh7e27qmt5ps5ypq4qyffeswp8jzg2qsc46wsa',
     'TRC20 USDT': 'TYerviHds7CVRTPAaxh5sWxr6D7hAB9EjQ'
   };
 
